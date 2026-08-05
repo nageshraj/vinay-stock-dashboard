@@ -90,14 +90,14 @@ export default function ScreenerView({ onSelectStock, refreshTrigger }) {
               key={p.id}
               className={`btn-secondary ${activePreset === p.id ? 'active' : ''}`}
               style={{
-                background: activePreset === p.id ? 'var(--blue)' : '#1a1f2c',
-                color: activePreset === p.id ? '#fff' : 'var(--text-main)',
+                background: activePreset === p.id ? 'var(--blue)' : 'var(--bg-card)',
+                color: activePreset === p.id ? 'var(--bg-dark)' : 'var(--text-main)',
                 borderColor: activePreset === p.id ? 'var(--blue)' : 'var(--border-color)',
                 padding: '8px 14px'
               }}
               onClick={() => handleSelectPreset(p)}
             >
-              <Zap size={14} color={activePreset === p.id ? '#fff' : 'var(--gold)'} /> {p.name}
+              <Zap size={14} color={activePreset === p.id ? 'var(--bg-dark)' : 'var(--gold)'} /> {p.name}
             </button>
           ))}
         </div>
@@ -268,7 +268,7 @@ export default function ScreenerView({ onSelectStock, refreshTrigger }) {
                     )}
                   </td>
                   <td>
-                    <div style={{ fontWeight: 600, color: '#fff' }}>{stk.name}</div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-heading)' }}>{stk.name}</div>
                     <div className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{stk.symbol}</div>
                   </td>
                   <td><span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{stk.sector}</span></td>

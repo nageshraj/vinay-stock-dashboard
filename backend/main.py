@@ -187,26 +187,6 @@ _sector_cache_lock = threading.Lock()
 SECTOR_CACHE_TTL = 300
 
 
-def _fetch_sector_stock_snapshot(stock: Dict[str, Any]) -> Dict[str, Any]:
-    """Worker: fetches a single stock's latest daily change % and close price.
-    Failed fetches are flagged is_live=False (price falls back to base_price)
-    so callers can tell real data from fallback rows."""
-    pct = 0.0
-    price = float(stock.get("base_price", 0.0))
-    is_live = False
-    try:
-        df = fyers_service.fetch_historical_candles(stock["symbol"], timeframe="D", days=10)
-        if not df.empty and len(df) >= 2:
-            c_curr = float(df.iloc[-1]["close"])
-            c_prev = float(df.iloc[-2]["close"])
-            pct = round(((c_curr - c_prev) / c_prev) * 100, 2)
-            price = round(c_curr, 2)
-            is_live = True
-    except Exception:
-        pass
-    return {"stock": stock, "changePct": pct, "price": price, "is_live": is_live}
-
-
 @app.get("/api/sectors")
 def get_sector_performance():
     now = _time.time()
@@ -216,33 +196,55 @@ def get_sector_performance():
 
     universe = fyers_service.get_stock_universe()
     sector_map = {}
+    stock_map = {}
     for stock in universe:
         sec = stock["sector"]
         if sec not in sector_map:
             sector_map[sec] = {"sector": sec, "stocks": [], "total_change": 0.0, "count": 0}
+        stock_map[stock["symbol"]] = stock
 
-    # Fetch all stocks in parallel (bounded to 8 workers, matching the FYERS
-    # rate-limit semaphore in fyers_service).
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = [executor.submit(_fetch_sector_stock_snapshot, stock) for stock in universe]
-        for future in as_completed(futures):
+    # Fetch all stocks in batches using quotes API
+    symbols = list(stock_map.keys())
+    batch_size = 50
+    live_data = {}
+
+    if fyers_service.is_connected and fyers_service.fyers_model:
+        for i in range(0, len(symbols), batch_size):
+            batch = symbols[i:i + batch_size]
+            symbols_str = ",".join(batch)
             try:
-                snap = future.result()
-            except Exception:
-                continue
-            stock = snap["stock"]
-            entry = sector_map.get(stock["sector"])
-            if entry is None:
-                continue
-            entry["stocks"].append({
-                "symbol": stock["symbol"],
-                "name": stock["name"],
-                "price": snap["price"],
-                "changePct": snap["changePct"],
-                "is_live": snap["is_live"]
-            })
-            entry["total_change"] += snap["changePct"]
-            entry["count"] += 1
+                quotes = fyers_service.fyers_model.quotes({"symbols": symbols_str})
+                if quotes.get("s") == "ok" and "d" in quotes:
+                    for item in quotes["d"]:
+                        sym = item.get("n", "")
+                        v = item.get("v", {})
+                        lp = v.get("lp", 0.0)
+                        chp = v.get("chp", 0.0)
+                        live_data[sym] = {"price": round(float(lp), 2), "changePct": round(float(chp), 2), "is_live": True}
+            except Exception as e:
+                print(f"Error fetching quotes for sectors: {e}")
+
+    for stock in universe:
+        sym = stock["symbol"]
+        entry = sector_map.get(stock["sector"])
+        if entry is None:
+            continue
+
+        snap = live_data.get(sym, {
+            "price": float(stock.get("base_price", 0.0)),
+            "changePct": 0.0,
+            "is_live": False
+        })
+
+        entry["stocks"].append({
+            "symbol": sym,
+            "name": stock["name"],
+            "price": snap["price"],
+            "changePct": snap["changePct"],
+            "is_live": snap["is_live"]
+        })
+        entry["total_change"] += snap["changePct"]
+        entry["count"] += 1
 
     results = []
     for sec, data in sector_map.items():

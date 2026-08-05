@@ -57,7 +57,7 @@ export default function SectorView({ onSelectStock, refreshTrigger }) {
                 {sec.topGainer && (
                   <div style={{ background: 'var(--bg-card-hover)', padding: '10px', borderRadius: '6px', marginBottom: '14px', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: 'var(--text-muted)' }}>Top Mover:</span>
-                    <strong style={{ color: '#fff' }}>{sec.topGainer.name} ({sec.topGainer.changePct >= 0 ? `+${sec.topGainer.changePct}%` : `${sec.topGainer.changePct}%`})</strong>
+                    <strong style={{ color: 'var(--text-heading)' }}>{sec.topGainer.name} ({sec.topGainer.changePct >= 0 ? `+${sec.topGainer.changePct}%` : `${sec.topGainer.changePct}%`})</strong>
                   </div>
                 )}
 

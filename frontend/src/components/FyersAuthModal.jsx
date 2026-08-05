@@ -58,7 +58,7 @@ export default function FyersAuthModal({ onClose, onConnected }) {
         <div className="card" style={{ padding: '16px', marginBottom: '20px', background: 'var(--blue-bg)', borderColor: 'var(--blue)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
             <div>
-              <h4 style={{ fontSize: '0.95rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--text-heading)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Zap size={16} color="var(--gold)" /> 1-Click Automated FYERS Login
               </h4>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
