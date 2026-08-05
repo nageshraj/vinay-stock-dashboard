@@ -223,11 +223,16 @@ class FyersService:
                 self.is_connected = True
                 user_name = profile.get("data", {}).get("name", "FYERS User")
                 print(f"FYERS API Connected! User: {user_name}")
+                # Invalidate stale locked data so fresh FYERS data is fetched
+                try:
+                    from screener_engine import screener_engine as se
+                    threading.Thread(target=se.invalidate_live_cache, daemon=True).start()
+                except Exception:
+                    pass
                 return {"status": "success", "user": user_name}
             else:
                 self.is_connected = False
                 print(f"FYERS Profile Check Failed: {profile}")
-                return {"status": "error", "message": profile.get("message", "Authentication failed")}
                 return {"status": "error", "message": profile.get("message", "Authentication failed")}
         except Exception as e:
             self.is_connected = False

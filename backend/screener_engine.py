@@ -73,6 +73,20 @@ class ScreenerEngine:
         today_str = datetime.now().strftime("%Y-%m-%d")
         return os.path.join(os.path.dirname(__file__), f"today_rvol_{tf}_{today_str}.json")
 
+    def invalidate_live_cache(self):
+        """
+        Clears all per-stock live data locks and RVOL result cache.
+        Call this whenever a new FYERS token is authenticated so stale/placeholder
+        data locked during a previous failed session gets discarded and re-fetched.
+        """
+        self._today_stock_cache.clear()
+        for tf in ["5m", "15m"]:
+            self._cache.pop(f"raw_rvol_{tf}_20_fno", None)
+        print("[ScreenerEngine] Live cache invalidated — will re-fetch fresh FYERS data.")
+        # Kick off fresh live fetch in background
+        for tf in ["5m", "15m"]:
+            threading.Thread(target=self._trigger_live_fetch, args=(tf,), daemon=True).start()
+
     def _load_today_snapshot(self, tf: str) -> Optional[List[Dict[str, Any]]]:
         snap_file = self._get_snapshot_filepath(tf)
         if os.path.exists(snap_file):
