@@ -80,7 +80,7 @@ export default function ScreenerView({ onSelectStock, refreshTrigger }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Preset Scans Header Bar */}
-      <div className="glass-card" style={{ padding: '20px' }}>
+      <div style={{ border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)', padding: '20px' }}>
         <h3 style={{ fontSize: '1rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Zap size={18} color="var(--gold)" /> Chartink Popular Scans Catalog
         </h3>
@@ -104,7 +104,7 @@ export default function ScreenerView({ onSelectStock, refreshTrigger }) {
       </div>
 
       {/* Visual Rule Builder Panel */}
-      <div className="glass-card" style={{ padding: '24px' }}>
+      <div style={{ border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)', padding: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
           <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Sliders size={18} color="var(--blue)" /> Custom Technical Condition Builder
@@ -226,7 +226,7 @@ export default function ScreenerView({ onSelectStock, refreshTrigger }) {
       </div>
 
       {/* Scan Results Table */}
-      <div className="glass-card" style={{ padding: '24px' }}>
+      <div style={{ border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)', padding: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>

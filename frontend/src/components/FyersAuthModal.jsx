@@ -55,7 +55,7 @@ export default function FyersAuthModal({ onClose, onConnected }) {
         </div>
 
         {/* 1-Click Auto Login Feature */}
-        <div className="glass-card" style={{ padding: '16px', marginBottom: '20px', background: 'linear-gradient(135deg, rgba(41,98,255,0.15) 0%, rgba(19,23,34,0.8) 100%)', borderColor: 'var(--blue)' }}>
+        <div style={{ border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)', padding: '16px', marginBottom: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <h4 style={{ fontSize: '0.95rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>

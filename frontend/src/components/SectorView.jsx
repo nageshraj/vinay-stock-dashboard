@@ -18,7 +18,7 @@ export default function SectorView({ onSelectStock, refreshTrigger }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div className="glass-card" style={{ padding: '24px' }}>
+      <div style={{ border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)', padding: '24px' }}>
         <h2 style={{ fontSize: '1.4rem', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <PieChart size={22} color="var(--blue)" /> NSE Sector Heatmap & Performance
         </h2>
@@ -36,11 +36,11 @@ export default function SectorView({ onSelectStock, refreshTrigger }) {
             return (
               <div 
                 key={sec.sector} 
-                className="glass-card" 
+
                 style={{ 
-                  padding: '20px', 
+                  padding: '20px', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)',
                   borderTop: `4px solid ${isPos ? 'var(--green)' : 'var(--red)'}`,
-                  background: isPos ? 'linear-gradient(180deg, rgba(0,240,144,0.04) 0%, var(--bg-card) 100%)' : 'linear-gradient(180deg, rgba(255,59,87,0.04) 0%, var(--bg-card) 100%)'
+
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>

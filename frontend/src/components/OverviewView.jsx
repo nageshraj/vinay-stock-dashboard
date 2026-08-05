@@ -24,7 +24,7 @@ export default function OverviewView({ onSelectStock, onSwitchToScreener, refres
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Hero Welcome Banner */}
-      <div className="glass-card" style={{ padding: '24px', background: 'linear-gradient(135deg, #131722 0%, #1e2538 100%)', borderLeft: '4px solid #2962ff' }}>
+      <div style={{ border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)', padding: '24px',  }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <h2 style={{ fontSize: '1.5rem', marginBottom: '6px' }}>ChartPulse Terminal Overview</h2>
@@ -51,8 +51,8 @@ export default function OverviewView({ onSelectStock, onSwitchToScreener, refres
             {stocks.slice(0, 8).map((stk) => (
               <div 
                 key={stk.symbol} 
-                className="glass-card" 
-                style={{ padding: '16px', cursor: 'pointer' }}
+
+                style={{ padding: '16px', cursor: 'pointer', border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)' }}
                 onClick={() => onSelectStock(stk.symbol, stk.name)}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
@@ -84,7 +84,7 @@ export default function OverviewView({ onSelectStock, onSwitchToScreener, refres
       {/* Gainers & Losers Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
         {/* Top Gainers */}
-        <div className="glass-card" style={{ padding: '20px' }}>
+        <div style={{ border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)', padding: '20px' }}>
           <h3 style={{ fontSize: '1rem', color: 'var(--green)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
             <ArrowUpRight size={18} /> Top Gainers Today
           </h3>
@@ -115,7 +115,7 @@ export default function OverviewView({ onSelectStock, onSwitchToScreener, refres
         </div>
 
         {/* Top Losers */}
-        <div className="glass-card" style={{ padding: '20px' }}>
+        <div style={{ border: '1px solid var(--border-color)', borderRadius: '12px', background: 'var(--bg-card)', padding: '20px' }}>
           <h3 style={{ fontSize: '1rem', color: 'var(--red)', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
             <ArrowDownRight size={18} /> Top Losers Today
           </h3>
