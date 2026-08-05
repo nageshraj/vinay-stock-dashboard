@@ -126,7 +126,7 @@ export default function ScreenerView({ onSelectStock, refreshTrigger }) {
         {/* Condition Rows */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {conditions.map((cond, idx) => (
-            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#0b0e14', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', flexWrap: 'wrap' }}>
+            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#0b0e14', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', flexWrap: 'wrap', overflowX: 'auto' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--blue)', background: 'rgba(41,98,255,0.15)', padding: '2px 8px', borderRadius: '4px' }}>
                 Rule #{idx + 1}
               </span>

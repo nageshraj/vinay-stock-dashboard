@@ -76,7 +76,7 @@ export async function updateAuthCredentials(appId, accessToken, secretKey = '') 
   }
 }
 
-export async function getOpeningRvolDashboard(timeframe = '5m', sortOrder = 'asc', retries = 3) {
+export async function getOpeningRvolDashboard(timeframe = '5m', sortOrder = 'desc', retries = 3) {
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
       const res = await fetch(`${API_BASE}/dashboard/opening-rvol?timeframe=${timeframe}&sort_order=${sortOrder}`);

@@ -59,6 +59,7 @@ class ScreenerEngine:
         self._baseline_20d_cache = {} # Key: (symbol, timeframe) -> float (20-day avg 1st candle vol)
         self._baseline_last_updated = 0
         self._rvol_lock = threading.Lock()
+        self._live_fetch_running = {}  # tf -> bool (in-flight gate for live fetch threads)
 
         # Synchronously pre-load disk baselines into memory and seed initial cache
         self._ensure_20d_baselines_loaded("5m")
@@ -73,15 +74,34 @@ class ScreenerEngine:
         today_str = datetime.now().strftime("%Y-%m-%d")
         return os.path.join(os.path.dirname(__file__), f"today_rvol_{tf}_{today_str}.json")
 
+    @staticmethod
+    def _looks_like_baseline(results) -> bool:
+        """
+        Returns True if results are baseline placeholder rows (price 500.0 sentinel).
+        Placeholders must never be treated as complete live data, otherwise the
+        cache guard short-circuits and the FYERS API is never called again.
+        """
+        return bool(results) and all(r.get("price", 0) == 500.0 for r in results[:5])
+
     def invalidate_live_cache(self):
         """
-        Clears all per-stock live data locks and RVOL result cache.
-        Call this whenever a new FYERS token is authenticated so stale/placeholder
-        data locked during a previous failed session gets discarded and re-fetched.
+        Clears all per-stock live data locks, RVOL result cache, and today's disk
+        snapshots. Call this whenever a new FYERS token is authenticated so stale/
+        placeholder data locked during a previous failed session gets discarded
+        and re-fetched.
         """
         self._today_stock_cache.clear()
         for tf in ["5m", "15m"]:
             self._cache.pop(f"raw_rvol_{tf}_20_fno", None)
+            # Delete today's snapshot so a stale placeholder snapshot on disk
+            # doesn't get re-loaded on the next restart.
+            snap_file = self._get_snapshot_filepath(tf)
+            if os.path.exists(snap_file):
+                try:
+                    os.remove(snap_file)
+                    print(f"[ScreenerEngine] Removed stale today snapshot: {snap_file}")
+                except Exception:
+                    pass
         print("[ScreenerEngine] Live cache invalidated — will re-fetch fresh FYERS data.")
         # Kick off fresh live fetch in background
         for tf in ["5m", "15m"]:
@@ -93,14 +113,16 @@ class ScreenerEngine:
             try:
                 with open(snap_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    if isinstance(data, list) and len(data) >= 50:
+                    if isinstance(data, list) and len(data) >= 50 and not self._looks_like_baseline(data):
                         return data
             except Exception:
                 pass
         return None
 
     def _save_today_snapshot(self, tf: str, data: List[Dict[str, Any]]):
-        if not data or len(data) < 50:
+        # Never persist baseline placeholder rows (price 500.0 sentinel) — a snapshot
+        # must only ever contain real live data.
+        if not data or len(data) < 50 or self._looks_like_baseline(data):
             return
         snap_file = self._get_snapshot_filepath(tf)
         try:
@@ -122,7 +144,9 @@ class ScreenerEngine:
                 print(f"Notice reading baseline disk cache: {e}")
 
     def _seed_cache_from_baselines(self, tf: str):
-        """Loads today's snapshot if available; otherwise builds from baselines and persists to disk."""
+        """Loads today's snapshot if available; otherwise builds in-memory baseline rows.
+        Baseline placeholder rows are never persisted to disk — only real live data
+        gets snapshotted so every boot attempts a live fetch."""
         self._ensure_20d_baselines_loaded(tf)
         snap = self._load_today_snapshot(tf)
         if snap and len(snap) >= 50:
@@ -155,11 +179,17 @@ class ScreenerEngine:
                 "signal": "NORMAL"
             })
         self._cache[f"raw_rvol_{tf}_20_fno"] = (time.time(), results)
-        if len(results) >= 50:
-            self._save_today_snapshot(tf, results)
+        # NOTE: never persist placeholder rows as today's snapshot. Only live data
+        # (price != 500.0 sentinel) gets snapshotted so boot always tries live fetch.
 
     def _trigger_live_fetch(self, tf: str):
-        """Background thread: Fetches live FYERS data and replaces baseline placeholders in cache."""
+        """Background thread: Fetches live FYERS data and replaces baseline placeholders in cache.
+        Guarded by an in-flight gate so concurrent triggers (dashboard polls, prewarmer,
+        OAuth invalidation) don't pile up duplicate fetch threads."""
+        with self._rvol_lock:
+            if self._live_fetch_running.get(tf, False):
+                return
+            self._live_fetch_running[tf] = True
         try:
             if fyers_service.is_connected:
                 print(f"[RVOL] Fetching live FYERS data for {tf}...")
@@ -173,11 +203,15 @@ class ScreenerEngine:
                 print(f"[RVOL] Fyers not connected, skipping live fetch for {tf}")
         except Exception as e:
             print(f"[RVOL] Live fetch error for {tf}: {e}")
+        finally:
+            self._live_fetch_running[tf] = False
 
     def _background_prewarmer(self):
         """Background thread: Seeds baseline data immediately, then fetches live FYERS data."""
         time.sleep(2)
-        # On first run: seed baselines then immediately kick off live fetch
+        # On first run: seed baselines, then ALWAYS kick off live fetch in parallel.
+        # A snapshot (even a live one) must not block live refresh — placeholders
+        # in the cache must be replaced with real FYERS data.
         for tf in ["5m", "15m"]:
             try:
                 snap = self._load_today_snapshot(tf)
@@ -186,8 +220,8 @@ class ScreenerEngine:
                     print(f"[RVOL] Loaded today's snapshot for {tf}: {len(snap)} stocks")
                 else:
                     self._seed_cache_from_baselines(tf)
-                    # Kick off live fetch immediately in parallel
-                    threading.Thread(target=self._trigger_live_fetch, args=(tf,), daemon=True).start()
+                # Kick off live fetch immediately in parallel (always)
+                threading.Thread(target=self._trigger_live_fetch, args=(tf,), daemon=True).start()
             except Exception as e:
                 print(f"[RVOL] Init error for {tf}: {e}")
 
@@ -204,17 +238,24 @@ class ScreenerEngine:
         raw_key = f"raw_rvol_{tf}_{days}_fno"
         universe = fyers_service.get_stock_universe(fno_only=True)
 
-        # Avoid recomputation if full universe results are already cached
-        if raw_key in self._cache:
-            _, existing_results = self._cache[raw_key]
-            if len(existing_results) >= len(universe):
-                return existing_results
+        # Avoid recomputation if full live universe results are already cached.
+        # Any leftover placeholder row (price=500.0 sentinel) means the fetch was
+        # incomplete — those stocks must be retried, so the cache does NOT count
+        # as complete live data.
+        def _has_complete_live_results():
+            if raw_key not in self._cache:
+                return False
+            _, existing = self._cache[raw_key]
+            if len(existing) < len(universe):
+                return False
+            return not any(r.get("price", 0) == 500.0 for r in existing)
+
+        if _has_complete_live_results():
+            return self._cache[raw_key][1]
 
         with self._rvol_lock:
-            if raw_key in self._cache:
-                _, existing_results = self._cache[raw_key]
-                if len(existing_results) >= len(universe):
-                    return existing_results
+            if _has_complete_live_results():
+                return self._cache[raw_key][1]
 
             temp_results = []
             for stock in universe:
@@ -253,6 +294,7 @@ class ScreenerEngine:
         today_vol = int(avg_20day_vol)
         curr_price = float(stock.get("base_price", 500.0))
         change_pct = 0.0
+        live_fetch_ok = False
 
         try:
             df_today = fyers_service.fetch_historical_candles(symbol, timeframe=tf, days=1)
@@ -263,6 +305,7 @@ class ScreenerEngine:
                 prev = df_today.iloc[-2] if len(df_today) > 1 else latest
                 curr_price = round(float(latest["close"]), 2)
                 change_pct = round(float(((curr_price - prev["close"]) / max(prev["close"], 0.01)) * 100), 2)
+                live_fetch_ok = True
         except Exception:
             pass
 
@@ -283,8 +326,12 @@ class ScreenerEngine:
             "signal": "HIGH RVOL" if rvol_ratio >= 1.5 else "NORMAL" if rvol_ratio >= 0.8 else "LOW RVOL"
         }
 
-        # Lock in memory so it never reverts or shifts on future refreshes
-        self._today_stock_cache[cache_key] = result_item
+        # Lock in memory so it never reverts or shifts on future refreshes.
+        # Only lock results backed by a successful live fetch — a failed fetch
+        # leaves the price=500 fallback, which must NOT be locked so it retries
+        # on the next refresh cycle.
+        if live_fetch_ok:
+            self._today_stock_cache[cache_key] = result_item
         return result_item
 
     def calculate_opening_rvol_dashboard(self, timeframe: str = "5m", days: int = 20, sort_order: str = "asc") -> List[Dict[str, Any]]:
@@ -303,16 +350,17 @@ class ScreenerEngine:
 
         # If data looks like baseline placeholders (all prices are 500.0), trigger a live fetch
         # This handles the case where the background prewarmer hasn't run yet
-        if results and all(r.get("price", 0) == 500.0 for r in results[:5]):
+        if self._looks_like_baseline(results):
             threading.Thread(target=self._trigger_live_fetch, args=(tf,), daemon=True).start()
 
         def safe_sort_key(x):
-            r = x.get("rvolRatio")
-            r_num = float(r) if isinstance(r, (int, float)) and not pd.isna(r) else 1.0
+            c = x.get("changePct")
+            c_num = float(c) if isinstance(c, (int, float)) and not pd.isna(c) else 0.0
             s = str(x.get("symbol", ""))
-            return (r_num, s)
+            return (c_num, s)
 
-        sorted_res = sorted(results, key=safe_sort_key, reverse=(sort_order == "desc"))
+        # Always sort by Change % highest to lowest; ignore sort_order param (kept for API compat)
+        sorted_res = sorted(results, key=safe_sort_key, reverse=True)
         return sorted_res
 
     def calculate_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
