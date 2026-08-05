@@ -9,19 +9,37 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
   
   const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isBaseline, setIsBaseline] = useState(false); // true when showing placeholder data
+  const [liveRetryCount, setLiveRetryCount] = useState(0);
+  const MAX_LIVE_RETRIES = 5;
 
-  const fetchDashboard = async () => {
-    setLoading(true);
+  const fetchDashboard = async (silent = false) => {
+    if (!silent) setLoading(true);
     const data = await getOpeningRvolDashboard(timeframe, sortOrder);
     if (data && data.results && data.results.length > 0) {
       setStocks(data.results);
+      // Detect if backend returned baseline placeholder data (all prices are 500.0)
+      const looksLikeBaseline = data.results.slice(0, 5).every(r => r.price === 500.0);
+      setIsBaseline(looksLikeBaseline);
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
   useEffect(() => {
+    setIsBaseline(false);
+    setLiveRetryCount(0);
     fetchDashboard();
   }, [timeframe, sortOrder]);
+
+  // Auto-retry in background when baseline placeholder data is detected
+  useEffect(() => {
+    if (!isBaseline || liveRetryCount >= MAX_LIVE_RETRIES) return;
+    const timer = setTimeout(() => {
+      setLiveRetryCount(c => c + 1);
+      fetchDashboard(true); // silent = no spinner
+    }, 8000); // retry after 8 seconds
+    return () => clearTimeout(timer);
+  }, [isBaseline, liveRetryCount, timeframe, sortOrder]);
 
   // Search filter
   const filteredStocks = stocks.filter(stk => 
@@ -53,6 +71,16 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
           </button>
         </div>
       </div>
+
+      {/* Live Data Loading Banner */}
+      {isBaseline && liveRetryCount < MAX_LIVE_RETRIES && (
+        <div style={{ padding: '12px 20px', borderRadius: '10px', background: 'rgba(255, 165, 0, 0.1)', border: '1px solid rgba(255, 165, 0, 0.3)', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.9rem' }}>
+          <RefreshCw size={16} className="spin" color="#FFA500" style={{ flexShrink: 0 }} />
+          <span style={{ color: '#FFA500' }}>
+            <strong>Fetching live FYERS data...</strong> Showing 20-day baseline averages while live data loads (attempt {liveRetryCount + 1}/{MAX_LIVE_RETRIES}).
+          </span>
+        </div>
+      )}
 
       {/* Summary Metric Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>

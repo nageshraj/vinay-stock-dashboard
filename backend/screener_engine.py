@@ -144,21 +144,47 @@ class ScreenerEngine:
         if len(results) >= 50:
             self._save_today_snapshot(tf, results)
 
+    def _trigger_live_fetch(self, tf: str):
+        """Background thread: Fetches live FYERS data and replaces baseline placeholders in cache."""
+        try:
+            if fyers_service.is_connected:
+                print(f"[RVOL] Fetching live FYERS data for {tf}...")
+                live_results = self._compute_and_cache_rvol(tf, 20)
+                if live_results and len(live_results) >= 50:
+                    self._save_today_snapshot(tf, live_results)
+                    print(f"[RVOL] Live data loaded for {tf}: {len(live_results)} stocks")
+                else:
+                    print(f"[RVOL] Live fetch returned {len(live_results) if live_results else 0} results — keeping baseline")
+            else:
+                print(f"[RVOL] Fyers not connected, skipping live fetch for {tf}")
+        except Exception as e:
+            print(f"[RVOL] Live fetch error for {tf}: {e}")
+
     def _background_prewarmer(self):
-        """Smart background thread: Ensures cache is always populated with baseline or snapshot."""
+        """Background thread: Seeds baseline data immediately, then fetches live FYERS data."""
         time.sleep(2)
+        # On first run: seed baselines then immediately kick off live fetch
+        for tf in ["5m", "15m"]:
+            try:
+                snap = self._load_today_snapshot(tf)
+                if snap and len(snap) >= 50:
+                    self._cache[f"raw_rvol_{tf}_20_fno"] = (time.time(), snap)
+                    print(f"[RVOL] Loaded today's snapshot for {tf}: {len(snap)} stocks")
+                else:
+                    self._seed_cache_from_baselines(tf)
+                    # Kick off live fetch immediately in parallel
+                    threading.Thread(target=self._trigger_live_fetch, args=(tf,), daemon=True).start()
+            except Exception as e:
+                print(f"[RVOL] Init error for {tf}: {e}")
+
+        # Subsequent runs: refresh live data every 5 minutes
         while True:
+            time.sleep(300)
             try:
                 for tf in ["5m", "15m"]:
-                    raw_key = f"raw_rvol_{tf}_20_fno"
-                    snap = self._load_today_snapshot(tf)
-                    if snap and len(snap) >= 50:
-                        self._cache[raw_key] = (time.time(), snap)
-                    elif raw_key not in self._cache or len(self._cache[raw_key][1]) < 50:
-                        self._seed_cache_from_baselines(tf)
+                    threading.Thread(target=self._trigger_live_fetch, args=(tf,), daemon=True).start()
             except Exception as e:
                 print(f"Background RVOL prewarmer notice: {e}")
-            time.sleep(300)
 
     def _compute_and_cache_rvol(self, tf: str, days: int) -> List[Dict[str, Any]]:
         raw_key = f"raw_rvol_{tf}_{days}_fno"
@@ -250,8 +276,8 @@ class ScreenerEngine:
     def calculate_opening_rvol_dashboard(self, timeframe: str = "5m", days: int = 20, sort_order: str = "asc") -> List[Dict[str, Any]]:
         """
         Instant response opening RVOL dashboard calculator.
-        Returns pre-computed background results in 0.001s with zero UI delay.
-        GUARANTEES 100% STABLE NIFTY 50 STOCK COUNT AND DETERMINISTIC SORT ORDER AT ALL TIMES.
+        Returns cached data immediately (baseline on first call, live data on subsequent calls).
+        If data looks like stale baseline placeholders (price=500), triggers a background live fetch.
         """
         tf = timeframe if timeframe in ["5m", "15m"] else "5m"
         raw_key = f"raw_rvol_{tf}_{days}_fno"
@@ -260,7 +286,12 @@ class ScreenerEngine:
             self._seed_cache_from_baselines(tf)
 
         _, results = self._cache.get(raw_key, (time.time(), []))
-        
+
+        # If data looks like baseline placeholders (all prices are 500.0), trigger a live fetch
+        # This handles the case where the background prewarmer hasn't run yet
+        if results and all(r.get("price", 0) == 500.0 for r in results[:5]):
+            threading.Thread(target=self._trigger_live_fetch, args=(tf,), daemon=True).start()
+
         def safe_sort_key(x):
             r = x.get("rvolRatio")
             r_num = float(r) if isinstance(r, (int, float)) and not pd.isna(r) else 1.0
