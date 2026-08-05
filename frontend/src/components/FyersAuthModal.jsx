@@ -55,7 +55,7 @@ export default function FyersAuthModal({ onClose, onConnected }) {
         </div>
 
         {/* 1-Click Auto Login Feature */}
-        <div className="glass-card" style={{ padding: '16px', marginBottom: '20px', background: 'linear-gradient(135deg, rgba(41,98,255,0.15) 0%, rgba(19,23,34,0.8) 100%)', borderColor: 'var(--blue)' }}>
+        <div className="card" style={{ padding: '16px', marginBottom: '20px', background: 'var(--blue-bg)', borderColor: 'var(--blue)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <h4 style={{ fontSize: '0.95rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -71,7 +71,7 @@ export default function FyersAuthModal({ onClose, onConnected }) {
           </div>
         </div>
 
-        <div style={{ background: '#0b0e14', padding: '14px', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '20px', fontSize: '0.85rem' }}>
+        <div style={{ background: 'var(--bg-card-hover)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '20px', fontSize: '0.85rem' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', color: 'var(--text-muted)' }}>
             <Info size={16} color="var(--blue)" style={{ flexShrink: 0, marginTop: '2px' }} />
             <div>

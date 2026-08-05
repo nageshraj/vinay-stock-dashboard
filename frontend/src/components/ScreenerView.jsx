@@ -80,7 +80,7 @@ export default function ScreenerView({ onSelectStock, refreshTrigger }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Preset Scans Header Bar */}
-      <div className="glass-card" style={{ padding: '20px' }}>
+      <div className="card" style={{ padding: '20px' }}>
         <h3 style={{ fontSize: '1rem', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Zap size={18} color="var(--gold)" /> Chartink Popular Scans Catalog
         </h3>
@@ -104,7 +104,7 @@ export default function ScreenerView({ onSelectStock, refreshTrigger }) {
       </div>
 
       {/* Visual Rule Builder Panel */}
-      <div className="glass-card" style={{ padding: '24px' }}>
+      <div className="card" style={{ padding: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
           <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Sliders size={18} color="var(--blue)" /> Custom Technical Condition Builder
@@ -126,7 +126,7 @@ export default function ScreenerView({ onSelectStock, refreshTrigger }) {
         {/* Condition Rows */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {conditions.map((cond, idx) => (
-            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#0b0e14', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', flexWrap: 'wrap', overflowX: 'auto' }}>
+            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg-card-hover)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', flexWrap: 'wrap', overflowX: 'auto' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--blue)', background: 'rgba(41,98,255,0.15)', padding: '2px 8px', borderRadius: '4px' }}>
                 Rule #{idx + 1}
               </span>
@@ -215,7 +215,7 @@ export default function ScreenerView({ onSelectStock, refreshTrigger }) {
         </div>
 
         {/* Live Expression Formula Bar */}
-        <div style={{ marginTop: '16px', background: '#080a0f', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+        <div style={{ marginTop: '16px', background: 'var(--bg-card-hover)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
             Chartink Formula Syntax Expression:
           </span>
@@ -226,7 +226,7 @@ export default function ScreenerView({ onSelectStock, refreshTrigger }) {
       </div>
 
       {/* Scan Results Table */}
-      <div className="glass-card" style={{ padding: '24px' }}>
+      <div className="card" style={{ padding: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>

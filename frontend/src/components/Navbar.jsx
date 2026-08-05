@@ -81,12 +81,12 @@ export default function Navbar({
 
         <div className="navbar-controls" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Auto Refresh Control Group */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#0b0e14', padding: '4px 10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--bg-card-hover)', padding: '4px 10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
             <Clock size={14} color="var(--blue)" />
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Auto Refresh:</span>
             <select 
               className="select-input" 
-              style={{ padding: '2px 6px', fontSize: '0.75rem', background: '#131722' }}
+              style={{ padding: '2px 6px', fontSize: '0.75rem', background: 'var(--bg-card)' }}
               value={refreshInterval} 
               onChange={(e) => setRefreshInterval(Number(e.target.value))}
             >
