@@ -113,7 +113,8 @@ class FyersService:
         t.start()
 
     def get_login_url(self):
-        redirect_uri = "http://localhost:3001/callback"
+        # Use Render production URL. Must match exactly what's in FYERS Developer Portal.
+        redirect_uri = "https://vinay-stock-dashboard.onrender.com/api/auth/callback"
         return f"https://api-t1.fyers.in/api/v3/generate-authcode?client_id={self.app_id}&redirect_uri={redirect_uri}&response_type=code&state=auth"
 
     def load_from_config(self):
