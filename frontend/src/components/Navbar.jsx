@@ -18,7 +18,7 @@ export default function Navbar({
       <div className="navbar">
         <div className="brand">
           <div className="brand-icon">
-            <TrendingUp size={22} color="#fff" />
+            <TrendingUp size={22} color="var(--text-heading)" />
           </div>
           <span>ChartPulse <span className="fyers-badge">FYERS v3</span></span>
         </div>

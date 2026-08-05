@@ -177,7 +177,7 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
                   <tr key={stk.symbol}>
                     <td className="mono" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>#{idx + 1}</td>
                     <td className="sticky-col-symbol">
-                      <div style={{ fontWeight: 600, color: '#fff' }}>{stk.name}</div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-heading)' }}>{stk.name}</div>
                       <div className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{stk.symbol}</div>
                     </td>
                     <td><span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{stk.sector}</span></td>
@@ -187,7 +187,7 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
                         {stk.changePct >= 0 ? `+${stk.changePct}%` : `${stk.changePct}%`}
                       </span>
                     </td>
-                    <td className="mono" style={{ fontWeight: 600, color: '#fff' }}>{(stk.today1stVol / 1000).toFixed(0)}k</td>
+                    <td className="mono" style={{ fontWeight: 600, color: 'var(--text-heading)' }}>{(stk.today1stVol / 1000).toFixed(0)}k</td>
                     <td className="mono" style={{ color: 'var(--text-muted)' }}>{(stk.avg20Day1stVol / 1000).toFixed(0)}k</td>
                     <td>
                       <span 

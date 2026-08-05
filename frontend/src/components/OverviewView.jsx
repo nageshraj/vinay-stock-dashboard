@@ -66,7 +66,7 @@ export default function OverviewView({ onSelectStock, onSwitchToScreener, refres
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '12px' }}>
                   <div>
-                    <div className="mono" style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff' }}>
+                    <div className="mono" style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-heading)' }}>
                       ₹{stk.price.toLocaleString()}
                     </div>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Vol: {(stk.volume / 1000).toFixed(0)}k</span>

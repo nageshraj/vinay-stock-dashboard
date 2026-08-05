@@ -162,7 +162,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
               <span className="mono" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{symbol}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px', flexWrap: 'wrap' }}>
-              <span className="mono" style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff' }}>₹{stockInfo.price}</span>
+              <span className="mono" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-heading)' }}>₹{stockInfo.price}</span>
               <span className={stockInfo.changePct >= 0 ? 'badge-green' : 'badge-red'}>
                 {stockInfo.changePct >= 0 ? `+${stockInfo.changePct}%` : `${stockInfo.changePct}%`}
               </span>

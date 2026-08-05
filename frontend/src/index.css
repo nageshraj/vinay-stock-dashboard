@@ -142,13 +142,13 @@ h1, h2, h3, h4, h5, h6 {
 .fyers-status-btn.connected {
   background: rgba(0, 240, 144, 0.12);
   border: 1px solid #00f090;
-  color: #ffffff;
+  color: var(--green);
 }
 
 .fyers-status-btn.disconnected {
   background: rgba(255, 59, 87, 0.12);
   border: 1px solid #ff3b57;
-  color: #ffffff;
+  color: var(--red);
 }
 
 .icon-green {
@@ -267,7 +267,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn-primary {
   background: var(--text-heading);
-  color: #fff;
+  color: var(--bg-dark);
   border: none;
   padding: 8px 16px;
   border-radius: 6px;
