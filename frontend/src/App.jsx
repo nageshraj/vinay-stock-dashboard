@@ -10,7 +10,7 @@ import FyersAuthModal from './components/FyersAuthModal';
 import { checkHealth, getIndices } from './services/api';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(localStorage.getItem('activeTab') || 'overview');
   const [indices, setIndices] = useState([]);
   const [fyersConnected, setFyersConnected] = useState(false);
   
@@ -40,6 +40,10 @@ export default function App() {
       setIsRefreshing(false);
     }
   };
+
+  useEffect(() => {
+    localStorage.setItem('activeTab', activeTab);
+  }, [activeTab]);
 
   // Initial load
   useEffect(() => {
