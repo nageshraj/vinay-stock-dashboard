@@ -51,6 +51,7 @@ FNO_SYMBOLS = set([
 
 class FyersService:
     def __init__(self):
+        self.is_connected = False
         self.load_credentials()
 
         # Start port 3001 callback listener to match registered FYERS App redirect_uri
