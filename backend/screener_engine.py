@@ -77,11 +77,12 @@ class ScreenerEngine:
     @staticmethod
     def _looks_like_baseline(results) -> bool:
         """
-        Returns True if results are baseline placeholder rows (price 500.0 sentinel).
-        Placeholders must never be treated as complete live data, otherwise the
-        cache guard short-circuits and the FYERS API is never called again.
+        Returns True if any row is not backed by a successful live fetch
+        (is_live is False/missing). Placeholder rows must never be treated as
+        complete live data, otherwise the cache guard short-circuits and the
+        FYERS API is never called again.
         """
-        return bool(results) and all(r.get("price", 0) == 500.0 for r in results[:5])
+        return bool(results) and not all(r.get("is_live", False) for r in results)
 
     def invalidate_live_cache(self):
         """
@@ -120,8 +121,8 @@ class ScreenerEngine:
         return None
 
     def _save_today_snapshot(self, tf: str, data: List[Dict[str, Any]]):
-        # Never persist baseline placeholder rows (price 500.0 sentinel) — a snapshot
-        # must only ever contain real live data.
+        # Never persist placeholder rows (rows not backed by a live fetch) — a
+        # snapshot must only ever contain real live data.
         if not data or len(data) < 50 or self._looks_like_baseline(data):
             return
         snap_file = self._get_snapshot_filepath(tf)
@@ -176,11 +177,13 @@ class ScreenerEngine:
                 "avg20Day1stVol": int(round(avg_vol, 0)),
                 "rvolRatio": 1.0,
                 "rvolPercent": 100.0,
-                "signal": "NORMAL"
+                "signal": "NORMAL",
+                "is_live": False
             })
         self._cache[f"raw_rvol_{tf}_20_fno"] = (time.time(), results)
-        # NOTE: never persist placeholder rows as today's snapshot. Only live data
-        # (price != 500.0 sentinel) gets snapshotted so boot always tries live fetch.
+        # NOTE: never persist placeholder rows as today's snapshot. Only rows
+        # backed by a successful live fetch (is_live=True) get snapshotted so
+        # boot always tries a live fetch.
 
     def _trigger_live_fetch(self, tf: str):
         """Background thread: Fetches live FYERS data and replaces baseline placeholders in cache.
@@ -239,16 +242,16 @@ class ScreenerEngine:
         universe = fyers_service.get_stock_universe(fno_only=True)
 
         # Avoid recomputation if full live universe results are already cached.
-        # Any leftover placeholder row (price=500.0 sentinel) means the fetch was
-        # incomplete — those stocks must be retried, so the cache does NOT count
-        # as complete live data.
+        # Any row not backed by a live fetch (is_live False/missing) means the
+        # fetch was incomplete — those stocks must be retried, so the cache does
+        # NOT count as complete live data.
         def _has_complete_live_results():
             if raw_key not in self._cache:
                 return False
             _, existing = self._cache[raw_key]
             if len(existing) < len(universe):
                 return False
-            return not any(r.get("price", 0) == 500.0 for r in existing)
+            return all(r.get("is_live", False) for r in existing)
 
         if _has_complete_live_results():
             return self._cache[raw_key][1]
@@ -257,14 +260,22 @@ class ScreenerEngine:
             if _has_complete_live_results():
                 return self._cache[raw_key][1]
 
+            # Fetch all stocks in parallel. Bounded to 8 workers — the same
+            # limit enforced by fyers_service._api_semaphore, so we stay within
+            # FYERS rate limits while cutting full-universe latency dramatically.
             temp_results = []
-            for stock in universe:
-                try:
-                    res = self._process_single_stock_rvol_delta(stock, tf)
-                    if res:
-                        temp_results.append(res)
-                except Exception:
-                    pass
+            with ThreadPoolExecutor(max_workers=8) as executor:
+                futures = [
+                    executor.submit(self._process_single_stock_rvol_delta, stock, tf)
+                    for stock in universe
+                ]
+                for future in as_completed(futures):
+                    try:
+                        res = future.result()
+                        if res:
+                            temp_results.append(res)
+                    except Exception:
+                        pass
 
             now = time.time()
             if temp_results and len(temp_results) >= len(universe):
@@ -280,9 +291,12 @@ class ScreenerEngine:
         symbol = stock["symbol"]
         cache_key = (symbol, tf)
 
-        # Check if already fetched and locked for session
-        if cache_key in self._today_stock_cache:
-            return self._today_stock_cache[cache_key]
+        # Serve from in-memory lock while fresh. TTL guards against serving
+        # yesterday's opening candle after midnight — a stale entry simply gets
+        # re-fetched on the next refresh cycle.
+        cached = self._today_stock_cache.get(cache_key)
+        if cached and (time.time() - cached[0]) < self._cache_ttl:
+            return cached[1]
 
         raw_avg = self._baseline_20d_cache.get((symbol, tf))
         if raw_avg is None or not isinstance(raw_avg, (int, float)) or float(raw_avg) <= 0:
@@ -323,22 +337,23 @@ class ScreenerEngine:
             "avg20Day1stVol": int(round(avg_20day_vol, 0)),
             "rvolRatio": rvol_ratio,
             "rvolPercent": rvol_pct,
-            "signal": "HIGH RVOL" if rvol_ratio >= 1.5 else "NORMAL" if rvol_ratio >= 0.8 else "LOW RVOL"
+            "signal": "HIGH RVOL" if rvol_ratio >= 1.5 else "NORMAL" if rvol_ratio >= 0.8 else "LOW RVOL",
+            "is_live": live_fetch_ok
         }
 
-        # Lock in memory so it never reverts or shifts on future refreshes.
-        # Only lock results backed by a successful live fetch — a failed fetch
-        # leaves the price=500 fallback, which must NOT be locked so it retries
-        # on the next refresh cycle.
+        # Lock in memory (with timestamp) so results don't churn within the TTL.
+        # Only lock rows backed by a successful live fetch — a failed fetch is
+        # never locked, so it retries on the next refresh cycle.
         if live_fetch_ok:
-            self._today_stock_cache[cache_key] = result_item
+            self._today_stock_cache[cache_key] = (time.time(), result_item)
         return result_item
 
-    def calculate_opening_rvol_dashboard(self, timeframe: str = "5m", days: int = 20, sort_order: str = "asc") -> List[Dict[str, Any]]:
+    def calculate_opening_rvol_dashboard(self, timeframe: str = "5m", days: int = 20, sort_order: str = "desc") -> List[Dict[str, Any]]:
         """
         Instant response opening RVOL dashboard calculator.
         Returns cached data immediately (baseline on first call, live data on subsequent calls).
-        If data looks like stale baseline placeholders (price=500), triggers a background live fetch.
+        If any row is not backed by a live fetch (is_live False/missing), triggers a
+        background live fetch so placeholders get replaced as soon as FYERS responds.
         """
         tf = timeframe if timeframe in ["5m", "15m"] else "5m"
         raw_key = f"raw_rvol_{tf}_{days}_fno"
@@ -348,8 +363,8 @@ class ScreenerEngine:
 
         _, results = self._cache.get(raw_key, (time.time(), []))
 
-        # If data looks like baseline placeholders (all prices are 500.0), trigger a live fetch
-        # This handles the case where the background prewarmer hasn't run yet
+        # If any row is not backed by a live fetch, trigger a background live fetch.
+        # This handles the case where the background prewarmer hasn't run yet.
         if self._looks_like_baseline(results):
             threading.Thread(target=self._trigger_live_fetch, args=(tf,), daemon=True).start()
 
@@ -359,8 +374,9 @@ class ScreenerEngine:
             s = str(x.get("symbol", ""))
             return (c_num, s)
 
-        # Always sort by Change % highest to lowest; ignore sort_order param (kept for API compat)
-        sorted_res = sorted(results, key=safe_sort_key, reverse=True)
+        # Sort by Change % according to requested order (asc = lowest first, desc = highest first)
+        reverse = (sort_order or "desc").lower() != "asc"
+        sorted_res = sorted(results, key=safe_sort_key, reverse=reverse)
         return sorted_res
 
     def calculate_indicators(self, df: pd.DataFrame) -> pd.DataFrame:

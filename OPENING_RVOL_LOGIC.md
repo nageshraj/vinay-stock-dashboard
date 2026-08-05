@@ -63,13 +63,18 @@ $$\text{RVOL Ratio} = \frac{\text{Volume of Today's 1st Candle (9:15 AM)}}{\frac
 3. **Smart Daily Snapshot Persistence (`today_rvol_{tf}_{date}.json`)**:
    - Once today's opening RVOL dataset is calculated or loaded, it is saved to a daily disk snapshot (`today_rvol_5m_YYYY-MM-DD.json`).
    - On server restarts or UI refreshes, today's snapshot is served directly from disk/memory in `0.000s`.
-   - The background thread detects existing daily snapshots and halts FYERS API calls completely, eliminating redundant recomputations.
+   - **A snapshot never blocks live refresh**: the background prewarmer ALWAYS kicks off a live FYERS fetch on boot and every 5 minutes, so placeholder rows are replaced with real data even when a snapshot exists.
 
 4. **Session Memory Locking (`_today_stock_cache`)**:
    - Prevents stock values, volume ratios, and sort orders from shifting or fluctuating across manual UI refreshes.
-   - Once a stock item is generated or fetched, it is locked in `self._today_stock_cache`.
+   - Locks carry a 5-minute TTL so yesterday's opening candle is never served after midnight — stale entries simply get re-fetched.
+   - Only rows backed by a successful live fetch (`is_live=True`) are locked; a failed fetch is never locked so it retries on the next refresh cycle.
 
-5. **Bulletproof Safe Sort Handler (`safe_sort_key`)**:
+5. **Live Data Integrity Flag (`is_live`)**:
+   - Every dashboard row carries an `is_live` boolean. Placeholder/baseline rows are flagged `False`.
+   - Cache guards, snapshot save/load, and the UI baseline banner all key off `is_live`, so placeholder rows are never mistaken for complete live data and never short-circuit a live FYERS fetch.
+
+6. **Bulletproof Safe Sort Handler (`safe_sort_key`)**:
    - Uses a null-safe sort comparator function to sort all 50 stocks deterministically without crashing or throwing type errors on `None` or `NaN` values.
 
 ---

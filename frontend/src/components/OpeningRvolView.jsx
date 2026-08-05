@@ -17,8 +17,9 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
     const data = await getOpeningRvolDashboard(timeframe, 'desc');
     if (data && data.results && data.results.length > 0) {
       setStocks(data.results);
-      // Detect if backend returned baseline placeholder data (all prices are 500.0)
-      const looksLikeBaseline = data.results.slice(0, 5).every(r => r.price === 500.0);
+      // Detect if backend returned any placeholder rows (not backed by a live fetch) —
+      // matches the backend's _looks_like_baseline semantics (any non-live row)
+      const looksLikeBaseline = data.results.some(r => !r.is_live);
       setIsBaseline(looksLikeBaseline);
     }
     if (!silent) setLoading(false);

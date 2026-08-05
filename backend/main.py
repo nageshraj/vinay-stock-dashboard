@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import os
+import threading
+import time as _time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 
 from fyers_service import fyers_service
@@ -120,15 +123,22 @@ def debug_status():
     def sample_prices(results):
         if not results:
             return []
-        return [{"symbol": r["symbol"], "price": r.get("price"), "rvolRatio": r.get("rvolRatio")} for r in results[:3]]
+        return [{"symbol": r["symbol"], "price": r.get("price"), "rvolRatio": r.get("rvolRatio"), "is_live": r.get("is_live")} for r in results[:3]]
+
+    def live_count(results):
+        if not results:
+            return 0
+        return sum(1 for r in results if r.get("is_live"))
 
     report["screener_cache"] = {
         "5m_cache_exists": cache_5m is not None,
         "5m_stock_count": len(cache_5m[1]) if cache_5m else 0,
+        "5m_live_count": live_count(cache_5m[1] if cache_5m else []),
         "5m_cache_age_seconds": round(_time.time() - cache_5m[0], 0) if cache_5m else None,
         "5m_sample_prices": sample_prices(cache_5m[1] if cache_5m else []),
         "15m_cache_exists": cache_15m is not None,
         "15m_stock_count": len(cache_15m[1]) if cache_15m else 0,
+        "15m_live_count": live_count(cache_15m[1] if cache_15m else []),
     }
 
     return report
@@ -170,32 +180,69 @@ def get_indices():
 def get_stock_universe():
     return fyers_service.get_stock_universe()
 
+# Sector performance: computed in parallel and cached for 5 minutes, since it
+# fetches 10-day candles for the entire universe (hundreds of FYERS calls).
+_sector_cache = {"ts": 0, "data": None}
+_sector_cache_lock = threading.Lock()
+SECTOR_CACHE_TTL = 300
+
+
+def _fetch_sector_stock_snapshot(stock: Dict[str, Any]) -> Dict[str, Any]:
+    """Worker: fetches a single stock's latest daily change % and close price.
+    Failed fetches are flagged is_live=False (price falls back to base_price)
+    so callers can tell real data from fallback rows."""
+    pct = 0.0
+    price = float(stock.get("base_price", 0.0))
+    is_live = False
+    try:
+        df = fyers_service.fetch_historical_candles(stock["symbol"], timeframe="D", days=10)
+        if not df.empty and len(df) >= 2:
+            c_curr = float(df.iloc[-1]["close"])
+            c_prev = float(df.iloc[-2]["close"])
+            pct = round(((c_curr - c_prev) / c_prev) * 100, 2)
+            price = round(c_curr, 2)
+            is_live = True
+    except Exception:
+        pass
+    return {"stock": stock, "changePct": pct, "price": price, "is_live": is_live}
+
+
 @app.get("/api/sectors")
 def get_sector_performance():
+    now = _time.time()
+    with _sector_cache_lock:
+        if _sector_cache["data"] is not None and now - _sector_cache["ts"] < SECTOR_CACHE_TTL:
+            return _sector_cache["data"]
+
     universe = fyers_service.get_stock_universe()
     sector_map = {}
-
     for stock in universe:
         sec = stock["sector"]
         if sec not in sector_map:
             sector_map[sec] = {"sector": sec, "stocks": [], "total_change": 0.0, "count": 0}
-        
-        df = fyers_service.fetch_historical_candles(stock["symbol"], timeframe="D", days=10)
-        if not df.empty and len(df) >= 2:
-            c_curr = df.iloc[-1]["close"]
-            c_prev = df.iloc[-2]["close"]
-            pct = round(((c_curr - c_prev) / c_prev) * 100, 2)
-        else:
-            pct = 0.0
 
-        sector_map[sec]["stocks"].append({
-            "symbol": stock["symbol"],
-            "name": stock["name"],
-            "price": round(df.iloc[-1]["close"], 2) if not df.empty else stock["base_price"],
-            "changePct": pct
-        })
-        sector_map[sec]["total_change"] += pct
-        sector_map[sec]["count"] += 1
+    # Fetch all stocks in parallel (bounded to 8 workers, matching the FYERS
+    # rate-limit semaphore in fyers_service).
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = [executor.submit(_fetch_sector_stock_snapshot, stock) for stock in universe]
+        for future in as_completed(futures):
+            try:
+                snap = future.result()
+            except Exception:
+                continue
+            stock = snap["stock"]
+            entry = sector_map.get(stock["sector"])
+            if entry is None:
+                continue
+            entry["stocks"].append({
+                "symbol": stock["symbol"],
+                "name": stock["name"],
+                "price": snap["price"],
+                "changePct": snap["changePct"],
+                "is_live": snap["is_live"]
+            })
+            entry["total_change"] += snap["changePct"]
+            entry["count"] += 1
 
     results = []
     for sec, data in sector_map.items():
@@ -206,6 +253,10 @@ def get_sector_performance():
         results.append(data)
 
     results.sort(key=lambda x: -x["avgChangePct"])
+
+    with _sector_cache_lock:
+        _sector_cache["data"] = results
+        _sector_cache["ts"] = _time.time()
     return results
 
 @app.get("/api/screener/presets")
@@ -263,7 +314,7 @@ def get_stock_candles(symbol: str = Query("NSE:RELIANCE-EQ"), timeframe: str = Q
 def get_opening_rvol_dashboard(
     timeframe: str = Query("5m"),
     days: int = Query(20),
-    sort_order: str = Query("asc")
+    sort_order: str = Query("desc")
 ):
     results = screener_engine.calculate_opening_rvol_dashboard(
         timeframe=timeframe,
