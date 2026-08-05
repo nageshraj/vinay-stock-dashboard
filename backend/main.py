@@ -284,7 +284,8 @@ def run_screener(req: ScreenerRunRequest):
 
 @app.get("/api/candles")
 def get_stock_candles(symbol: str = Query("NSE:RELIANCE-EQ"), timeframe: str = Query("D")):
-    df = fyers_service.fetch_historical_candles(symbol, timeframe=timeframe, days=120)
+    fetch_days = 100 if timeframe != "D" else 120
+    df = fyers_service.fetch_historical_candles(symbol, timeframe=timeframe, days=fetch_days)
     df_ind = screener_engine.calculate_indicators(df)
     candles = []
     for _, row in df_ind.iterrows():
