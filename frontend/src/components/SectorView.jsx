@@ -18,7 +18,7 @@ export default function SectorView({ onSelectStock, refreshTrigger }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div className="glass-card" style={{ padding: '24px' }}>
+      <div className="card" style={{ padding: '24px' }}>
         <h2 style={{ fontSize: '1.4rem', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <PieChart size={22} color="var(--blue)" /> NSE Sector Heatmap & Performance
         </h2>
@@ -36,7 +36,7 @@ export default function SectorView({ onSelectStock, refreshTrigger }) {
             return (
               <div 
                 key={sec.sector} 
-                className="glass-card" 
+                className="card"
                 style={{ 
                   padding: '20px', 
                   borderTop: `4px solid ${isPos ? 'var(--green)' : 'var(--red)'}`,
@@ -55,7 +55,7 @@ export default function SectorView({ onSelectStock, refreshTrigger }) {
                 </div>
 
                 {sec.topGainer && (
-                  <div style={{ background: '#0b0e14', padding: '10px', borderRadius: '6px', marginBottom: '14px', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ background: 'var(--bg-card-hover)', padding: '10px', borderRadius: '6px', marginBottom: '14px', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: 'var(--text-muted)' }}>Top Mover:</span>
                     <strong style={{ color: '#fff' }}>{sec.topGainer.name} ({sec.topGainer.changePct >= 0 ? `+${sec.topGainer.changePct}%` : `${sec.topGainer.changePct}%`})</strong>
                   </div>

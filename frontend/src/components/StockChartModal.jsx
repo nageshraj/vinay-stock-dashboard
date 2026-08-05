@@ -225,7 +225,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
         {/* TradingView Chart Canvas */}
         <div className="chart-container" style={{ position: 'relative', width: '100%', height: '440px' }}>
           {loading && (
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(19,23,34,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, color: 'var(--text-muted)' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, color: 'var(--text-muted)' }}>
               <RefreshCw size={24} className="spin" style={{ marginRight: '8px' }} /> Loading candlestick data from FYERS...
             </div>
           )}
