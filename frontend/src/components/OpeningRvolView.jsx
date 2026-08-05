@@ -154,8 +154,8 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
           <table className="data-table">
             <thead>
               <tr>
-                <th style={{ width: '50px' }}>Rank</th>
-                <th style={{ cursor: 'pointer' }} onClick={() => handleSort('name')}>Symbol & Company Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}</th>
+                <th className="sticky-col-rank" style={{ width: '50px' }}>Rank</th>
+                <th className="sticky-col-symbol" style={{ cursor: 'pointer' }} onClick={() => handleSort('name')}>Symbol & Company Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}</th>
                 <th style={{ cursor: 'pointer' }} onClick={() => handleSort('sector')}>Sector {sortConfig.key === 'sector' && (sortConfig.direction === 'asc' ? '↑' : '↓')}</th>
                 <th style={{ cursor: 'pointer' }} onClick={() => handleSort('price')}>Price {sortConfig.key === 'price' && (sortConfig.direction === 'asc' ? '↑' : '↓')}</th>
                 <th style={{ cursor: 'pointer' }} onClick={() => handleSort('changePct')}>Change % {sortConfig.key === 'changePct' && (sortConfig.direction === 'asc' ? '↑' : '↓')}</th>
@@ -175,8 +175,8 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
 
                 return (
                   <tr key={stk.symbol}>
-                    <td className="mono" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>#{idx + 1}</td>
-                    <td>
+                    <td className="mono sticky-col-rank" style={{ color: 'var(--text-muted)', fontWeight: 600 }}>#{idx + 1}</td>
+                    <td className="sticky-col-symbol">
                       <div style={{ fontWeight: 600, color: '#fff' }}>{stk.name}</div>
                       <div className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{stk.symbol}</div>
                     </td>
