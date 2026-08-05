@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, ArrowUpDown, Search, LineChart, RefreshCw, Zap, TrendingUp, TrendingDown } from 'lucide-react';
+import { BarChart3, Search, LineChart, RefreshCw } from 'lucide-react';
 import { getOpeningRvolDashboard } from '../services/api';
 
 export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
   const [timeframe, setTimeframe] = useState('5m');
-  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
   const [searchTerm, setSearchTerm] = useState('');
   
   const [stocks, setStocks] = useState([]);
@@ -15,7 +14,7 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
 
   const fetchDashboard = async (silent = false) => {
     if (!silent) setLoading(true);
-    const data = await getOpeningRvolDashboard(timeframe, sortOrder);
+    const data = await getOpeningRvolDashboard(timeframe, 'desc');
     if (data && data.results && data.results.length > 0) {
       setStocks(data.results);
       // Detect if backend returned baseline placeholder data (all prices are 500.0)
@@ -29,7 +28,7 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
     setIsBaseline(false);
     setLiveRetryCount(0);
     fetchDashboard();
-  }, [timeframe, sortOrder]);
+  }, [timeframe]);
 
   // Auto-retry in background when baseline placeholder data is detected
   useEffect(() => {
@@ -39,7 +38,7 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
       fetchDashboard(true); // silent = no spinner
     }, 8000); // retry after 8 seconds
     return () => clearTimeout(timer);
-  }, [isBaseline, liveRetryCount, timeframe, sortOrder]);
+  }, [isBaseline, liveRetryCount, timeframe]);
 
   // Search filter
   const filteredStocks = stocks.filter(stk => 
@@ -62,7 +61,7 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
               <BarChart3 size={24} color="var(--blue)" /> Opening 1st Candle Volume Dashboard (20-Day Comparison)
             </h2>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '4px' }}>
-              Compares today's opening 1st candle volume ({timeframe === '5m' ? '9:15-9:20 AM' : '9:15-9:30 AM'}) against the 20-day average opening 1st candle volume for <strong>NSE F&O Stocks</strong>. Listed in <strong>{sortOrder === 'asc' ? 'Ascending Order (Lowest to Highest)' : 'Descending Order (Highest to Lowest)'}</strong>.
+              Compares today's opening 1st candle volume ({timeframe === '5m' ? '9:15-9:20 AM' : '9:15-9:30 AM'}) against the 20-day average opening 1st candle volume for <strong>NSE F&O Stocks</strong>. Listed in <strong>Change % (Highest to Lowest)</strong>.
             </p>
           </div>
 
@@ -119,9 +118,7 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
           </div>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>20-Day Baseline</span>
         </div>
-      </div>
-
-      {/* Control Toolbar: Timeframe + Sort + Search */}
+      </div>      {/* Control Toolbar: Timeframe + Search */}
       <div className="glass-card" style={{ padding: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           {/* Timeframe selector tabs */}
@@ -143,16 +140,8 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
             </div>
           </div>
 
-          {/* Sort order & Search */}
+          {/* Search */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <button 
-              className="btn-secondary" 
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              style={{ padding: '8px 14px' }}
-            >
-              <ArrowUpDown size={14} /> Sort: {sortOrder === 'asc' ? 'Ascending (Lowest -> Highest)' : 'Descending (Highest -> Lowest)'}
-            </button>
-
             <div style={{ position: 'relative' }}>
               <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '10px', top: '10px' }} />
               <input 

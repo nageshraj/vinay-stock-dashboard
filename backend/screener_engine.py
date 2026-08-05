@@ -307,12 +307,13 @@ class ScreenerEngine:
             threading.Thread(target=self._trigger_live_fetch, args=(tf,), daemon=True).start()
 
         def safe_sort_key(x):
-            r = x.get("rvolRatio")
-            r_num = float(r) if isinstance(r, (int, float)) and not pd.isna(r) else 1.0
+            c = x.get("changePct")
+            c_num = float(c) if isinstance(c, (int, float)) and not pd.isna(c) else 0.0
             s = str(x.get("symbol", ""))
-            return (r_num, s)
+            return (c_num, s)
 
-        sorted_res = sorted(results, key=safe_sort_key, reverse=(sort_order == "desc"))
+        # Always sort by Change % highest to lowest; ignore sort_order param (kept for API compat)
+        sorted_res = sorted(results, key=safe_sort_key, reverse=True)
         return sorted_res
 
     def calculate_indicators(self, df: pd.DataFrame) -> pd.DataFrame:

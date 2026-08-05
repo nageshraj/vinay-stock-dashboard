@@ -155,13 +155,13 @@ export default function StockChartModal({ symbol, name, onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="chart-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ flex: '1 1 auto', minWidth: '200px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               <h2 style={{ fontSize: '1.4rem' }}>{name}</h2>
               <span className="mono" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{symbol}</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px', flexWrap: 'wrap' }}>
               <span className="mono" style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff' }}>₹{stockInfo.price}</span>
               <span className={stockInfo.changePct >= 0 ? 'badge-green' : 'badge-red'}>
                 {stockInfo.changePct >= 0 ? `+${stockInfo.changePct}%` : `${stockInfo.changePct}%`}
@@ -170,7 +170,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
             {/* Timeframe selector */}
             <div className="nav-tabs">
               {['15m', '1h', 'D'].map((tf) => (
@@ -192,7 +192,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
         </div>
 
         {/* Indicators Overlay Toggles */}
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Layers size={14} /> Technical Overlays:
           </span>
@@ -223,7 +223,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
         </div>
 
         {/* TradingView Chart Canvas */}
-        <div style={{ position: 'relative', width: '100%', height: '440px' }}>
+        <div className="chart-container" style={{ position: 'relative', width: '100%', height: '440px' }}>
           {loading && (
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(19,23,34,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, color: 'var(--text-muted)' }}>
               <RefreshCw size={24} className="spin" style={{ marginRight: '8px' }} /> Loading candlestick data from FYERS...

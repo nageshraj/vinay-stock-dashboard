@@ -1,5 +1,5 @@
-import React from 'react';
-import { TrendingUp, Filter, PieChart, ShieldCheck, ShieldAlert, Zap, RefreshCw, Clock, BarChart3 } from 'lucide-react';
+import React, { useState } from 'react';
+import { TrendingUp, Filter, PieChart, ShieldCheck, ShieldAlert, Zap, RefreshCw, Clock, BarChart3, Menu, X } from 'lucide-react';
 
 export default function Navbar({ 
   activeTab, 
@@ -13,6 +13,8 @@ export default function Navbar({
   isRefreshing,
   onManualRefresh
 }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <header>
       <div className="navbar">
@@ -23,34 +25,61 @@ export default function Navbar({
           <span>ChartPulse <span style={{ fontSize: '0.7rem', color: '#00f090', textTransform: 'uppercase', background: 'rgba(0,240,144,0.15)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(0,240,144,0.3)', fontWeight: 600 }}>FYERS v3</span></span>
         </div>
 
-        <nav className="nav-tabs">
+        {/* Mobile Menu Toggle */}
+        <button 
+          className="mobile-menu-toggle"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          style={{ 
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-main)',
+            cursor: 'pointer',
+            padding: '8px'
+          }}
+        >
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+
+        <nav className={`nav-tabs ${mobileMenuOpen ? 'mobile-open' : ''}`}>
           <button 
             className={`nav-btn ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
+            onClick={() => {
+              setActiveTab('overview');
+              setMobileMenuOpen(false);
+            }}
           >
             <TrendingUp size={16} /> Overview
           </button>
           <button 
             className={`nav-btn ${activeTab === 'rvol' ? 'active' : ''}`}
-            onClick={() => setActiveTab('rvol')}
+            onClick={() => {
+              setActiveTab('rvol');
+              setMobileMenuOpen(false);
+            }}
           >
             <BarChart3 size={16} /> Opening RVOL
           </button>
           <button 
             className={`nav-btn ${activeTab === 'screener' ? 'active' : ''}`}
-            onClick={() => setActiveTab('screener')}
+            onClick={() => {
+              setActiveTab('screener');
+              setMobileMenuOpen(false);
+            }}
           >
             <Filter size={16} /> Screener
           </button>
           <button 
             className={`nav-btn ${activeTab === 'sectors' ? 'active' : ''}`}
-            onClick={() => setActiveTab('sectors')}
+            onClick={() => {
+              setActiveTab('sectors');
+              setMobileMenuOpen(false);
+            }}
           >
             <PieChart size={16} /> Sectors
           </button>
         </nav>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="navbar-controls" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Auto Refresh Control Group */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#0b0e14', padding: '4px 10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
             <Clock size={14} color="var(--blue)" />
