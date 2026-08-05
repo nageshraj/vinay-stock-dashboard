@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { TrendingUp, Filter, PieChart, ShieldCheck, ShieldAlert, Zap, RefreshCw, Clock, BarChart3, Menu, X } from 'lucide-react';
+import React from 'react';
+import { TrendingUp, Filter, PieChart, ShieldCheck, ShieldAlert, RefreshCw, Clock, BarChart3 } from 'lucide-react';
 
 export default function Navbar({ 
   activeTab, 
@@ -13,8 +13,6 @@ export default function Navbar({
   isRefreshing,
   onManualRefresh
 }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   return (
     <header>
       <div className="navbar">
@@ -22,71 +20,43 @@ export default function Navbar({
           <div className="brand-icon">
             <TrendingUp size={22} color="#fff" />
           </div>
-          <span>ChartPulse <span style={{ fontSize: '0.7rem', color: '#00f090', textTransform: 'uppercase', background: 'rgba(0,240,144,0.15)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(0,240,144,0.3)', fontWeight: 600 }}>FYERS v3</span></span>
+          <span>ChartPulse <span className="fyers-badge">FYERS v3</span></span>
         </div>
 
-        {/* Mobile Menu Toggle */}
-        <button 
-          className="mobile-menu-toggle"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          style={{ 
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-main)',
-            cursor: 'pointer',
-            padding: '8px'
-          }}
-        >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-
-        <nav className={`nav-tabs ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+        <nav className="nav-tabs">
           <button 
             className={`nav-btn ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('overview');
-              setMobileMenuOpen(false);
-            }}
+            onClick={() => setActiveTab('overview')}
           >
             <TrendingUp size={16} /> Overview
           </button>
           <button 
             className={`nav-btn ${activeTab === 'rvol' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('rvol');
-              setMobileMenuOpen(false);
-            }}
+            onClick={() => setActiveTab('rvol')}
           >
             <BarChart3 size={16} /> Opening RVOL
           </button>
           <button 
             className={`nav-btn ${activeTab === 'screener' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('screener');
-              setMobileMenuOpen(false);
-            }}
+            onClick={() => setActiveTab('screener')}
           >
             <Filter size={16} /> Screener
           </button>
           <button 
             className={`nav-btn ${activeTab === 'sectors' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('sectors');
-              setMobileMenuOpen(false);
-            }}
+            onClick={() => setActiveTab('sectors')}
           >
             <PieChart size={16} /> Sectors
           </button>
         </nav>
 
-        <div className="navbar-controls" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="navbar-controls">
           {/* Auto Refresh Control Group */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--bg-card-hover)', padding: '4px 10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-            <Clock size={14} color="var(--blue)" />
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Auto Refresh:</span>
+          <div className="auto-refresh-group">
+            <Clock size={14} className="icon-blue" />
+            <span className="auto-refresh-label">Auto Refresh:</span>
             <select 
-              className="select-input" 
-              style={{ padding: '2px 6px', fontSize: '0.75rem', background: 'var(--bg-card)' }}
+              className="select-input auto-refresh-select"
               value={refreshInterval} 
               onChange={(e) => setRefreshInterval(Number(e.target.value))}
             >
@@ -98,14 +68,13 @@ export default function Navbar({
             </select>
 
             {refreshInterval > 0 && (
-              <span className="mono" style={{ fontSize: '0.75rem', color: 'var(--green)', fontWeight: 600, minWidth: '24px' }}>
+              <span className="mono auto-refresh-countdown">
                 {countdown}s
               </span>
             )}
 
             <button 
-              className="btn-secondary" 
-              style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+              className="btn-secondary refresh-btn"
               onClick={onManualRefresh}
               title="Refresh data now"
             >
@@ -115,30 +84,19 @@ export default function Navbar({
 
           {/* Simple FYERS Status Badge */}
           <button 
-            className="btn-secondary" 
+            className={`btn-secondary fyers-status-btn ${fyersConnected ? 'connected' : 'disconnected'}`}
             onClick={onOpenAuthModal}
-            style={{ 
-              borderRadius: '8px',
-              padding: '6px 14px',
-              fontSize: '0.8rem',
-              background: fyersConnected ? 'rgba(0, 240, 144, 0.12)' : 'rgba(255, 59, 87, 0.12)',
-              border: `1px solid ${fyersConnected ? '#00f090' : '#ff3b57'}`,
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
             title="Click to manage FYERS API credentials"
           >
             {fyersConnected ? (
               <>
-                <ShieldCheck size={16} color="#00f090" />
-                <span style={{ color: '#00f090', fontWeight: 700 }}>Connected</span>
+                <ShieldCheck size={16} className="icon-green" />
+                <span className="status-text-connected">Connected</span>
               </>
             ) : (
               <>
-                <ShieldAlert size={16} color="#ff3b57" />
-                <span style={{ color: '#ff3b57', fontWeight: 700 }}>Not Connected</span>
+                <ShieldAlert size={16} className="icon-red" />
+                <span className="status-text-disconnected">Not Connected</span>
               </>
             )}
           </button>
