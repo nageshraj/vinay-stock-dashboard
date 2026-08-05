@@ -109,7 +109,7 @@ export default function Navbar({
         {indices.map((idx, i) => (
           <div key={i} className="ticker-item">
             <span className="ticker-name">{idx.name}</span>
-            <span className="mono" style={{ color: '#fff', fontWeight: 600 }}>{idx.value.toLocaleString()}</span>
+            <span className="mono" style={{ color: 'var(--text-main)', fontWeight: 600 }}>{idx.value.toLocaleString()}</span>
             <span className={idx.change >= 0 ? 'badge-green' : 'badge-red'}>
               {idx.change >= 0 ? `+${idx.change}` : idx.change} ({idx.pChange >= 0 ? `+${idx.pChange}%` : `${idx.pChange}%`})
             </span>

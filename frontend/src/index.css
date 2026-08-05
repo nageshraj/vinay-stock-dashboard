@@ -341,21 +341,13 @@ h1, h2, h3, h4, h5, h6 {
   border-bottom: 1px solid var(--border-color);
 }
 
-.sticky-col-rank {
+.sticky-col-symbol {
   position: sticky;
   left: 0;
   background-color: var(--bg-card);
   z-index: 10;
 }
 
-.sticky-col-symbol {
-  position: sticky;
-  left: 50px;
-  background-color: var(--bg-card);
-  z-index: 10;
-}
-
-.data-table th.sticky-col-rank,
 .data-table th.sticky-col-symbol {
   z-index: 11;
 }
