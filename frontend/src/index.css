@@ -76,6 +76,99 @@ h1, h2, h3, h4, h5, h6 {
   z-index: 100;
 }
 
+.fyers-badge {
+  font-size: 0.7rem;
+  color: #00f090;
+  text-transform: uppercase;
+  background: rgba(0,240,144,0.15);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(0,240,144,0.3);
+  font-weight: 600;
+}
+
+.navbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auto-refresh-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card-hover);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.icon-blue {
+  color: var(--blue);
+}
+
+.auto-refresh-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.auto-refresh-select {
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  background: var(--bg-card);
+}
+
+.auto-refresh-countdown {
+  font-size: 0.75rem;
+  color: var(--green);
+  font-weight: 600;
+  min-width: 24px;
+}
+
+.refresh-btn {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+}
+
+.fyers-status-btn {
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fyers-status-btn.connected {
+  background: rgba(0, 240, 144, 0.12);
+  border: 1px solid #00f090;
+  color: #ffffff;
+}
+
+.fyers-status-btn.disconnected {
+  background: rgba(255, 59, 87, 0.12);
+  border: 1px solid #ff3b57;
+  color: #ffffff;
+}
+
+.icon-green {
+  color: #00f090;
+}
+
+.icon-red {
+  color: #ff3b57;
+}
+
+.status-text-connected {
+  color: #00f090;
+  font-weight: 700;
+}
+
+.status-text-disconnected {
+  color: #ff3b57;
+  font-weight: 700;
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -296,23 +389,52 @@ h1, h2, h3, h4, h5, h6 {
   .navbar {
     flex-wrap: wrap;
     height: auto;
-    gap: 12px;
+    gap: 16px;
+    padding: 16px;
+    flex-direction: column;
+    align-items: center;
   }
   
   .brand {
     width: 100%;
-    justify-content: space-between;
+    justify-content: center;
   }
   
   .nav-tabs {
     width: 100%;
     overflow-x: auto;
     padding-bottom: 4px;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav-tabs::-webkit-scrollbar {
+    display: none;
   }
   
   .navbar-controls {
     width: 100%;
     justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .auto-refresh-group {
+    flex: 1;
+    justify-content: space-between;
+    padding: 8px 12px;
+  }
+
+  .fyers-status-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 14px;
+  }
+
+  .nav-btn {
+    padding: 8px 16px;
+    font-size: 0.95rem;
+    white-space: nowrap;
   }
   
   .sector-grid {
@@ -327,14 +449,5 @@ h1, h2, h3, h4, h5, h6 {
   
   .modal-content {
     padding: 16px;
-  }
-}
-/* Mobile Menu Toggle */
-.mobile-menu-toggle {
-  display: none;
-}
-@media (max-width: 768px) {
-  .mobile-menu-toggle {
-    display: block;
   }
 }
