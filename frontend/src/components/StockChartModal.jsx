@@ -82,8 +82,11 @@ export default function StockChartModal({ symbol, name, onClose }) {
         wickDownColor: '#ff3b57'
       });
 
+      const isIntraday = timeframe !== 'D';
+      const offset = isIntraday ? 19800 : 0; // +5:30 offset in seconds
+
       const formattedCandles = candles.map(c => ({
-        time: c.time,
+        time: isIntraday ? c.time + offset : c.time,
         open: c.open,
         high: c.high,
         low: c.low,
@@ -100,7 +103,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
       });
 
       volumeSeries.setData(candles.map(c => ({
-        time: c.time,
+        time: isIntraday ? c.time + offset : c.time,
         value: c.volume,
         color: c.close >= c.open ? 'rgba(0, 240, 144, 0.3)' : 'rgba(255, 59, 87, 0.3)'
       })));
@@ -112,7 +115,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
           lineWidth: 2,
           title: 'EMA 20'
         });
-        ema20Series.setData(candles.filter(c => c.ema20 !== null).map(c => ({ time: c.time, value: c.ema20 })));
+        ema20Series.setData(candles.filter(c => c.ema20 !== null).map(c => ({ time: isIntraday ? c.time + offset : c.time, value: c.ema20 })));
       }
 
       // EMA 50 Overlay Line
@@ -122,10 +125,26 @@ export default function StockChartModal({ symbol, name, onClose }) {
           lineWidth: 2,
           title: 'EMA 50'
         });
-        ema50Series.setData(candles.filter(c => c.ema50 !== null).map(c => ({ time: c.time, value: c.ema50 })));
+        ema50Series.setData(candles.filter(c => c.ema50 !== null).map(c => ({ time: isIntraday ? c.time + offset : c.time, value: c.ema50 })));
       }
 
-      chart.timeScale().fitContent();
+      // Optimize default zoom / visible candles based on standard industry views
+      const visibleBarsMap = {
+        '5m': 50,    // ~half a trading day
+        '15m': 60,   // ~2 trading days
+        '1h': 70,    // ~2 weeks
+        'D': 90      // ~4 months
+      };
+      const defaultVisibleBars = visibleBarsMap[timeframe] || 60;
+
+      if (candles.length > defaultVisibleBars) {
+        chart.timeScale().setVisibleLogicalRange({
+          from: candles.length - defaultVisibleBars,
+          to: candles.length
+        });
+      } else {
+        chart.timeScale().fitContent();
+      }
 
       // Handle Resize with ResizeObserver
       const resizeObserver = new ResizeObserver(entries => {
@@ -180,7 +199,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
             {/* Timeframe selector */}
             <div className="nav-tabs">
-              {['15m', '1h', 'D'].map((tf) => (
+              {['5m', '15m', '1h', 'D'].map((tf) => (
                 <button 
                   key={tf} 
                   className={`nav-btn ${timeframe === tf ? 'active' : ''}`}

@@ -284,7 +284,15 @@ def run_screener(req: ScreenerRunRequest):
 
 @app.get("/api/candles")
 def get_stock_candles(symbol: str = Query("NSE:RELIANCE-EQ"), timeframe: str = Query("D")):
-    fetch_days = 90 if timeframe != "D" else 120
+    # Optimize fetch_days depending on timeframe to reduce data transfer and speed up chart loading
+    if timeframe == "5m":
+        fetch_days = 15
+    elif timeframe == "15m":
+        fetch_days = 30
+    elif timeframe == "1h":
+        fetch_days = 60
+    else:
+        fetch_days = 120
     df = fyers_service.fetch_historical_candles(symbol, timeframe=timeframe, days=fetch_days)
     df_ind = screener_engine.calculate_indicators(df)
     candles = []
