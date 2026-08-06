@@ -6,6 +6,7 @@ import { getStockCandles } from '../services/api';
 export default function StockChartModal({ symbol, name, onClose }) {
   const chartContainerRef = useRef(null);
   const chartInstance = useRef(null);
+  const legendRef = useRef(null);
 
   const [timeframe, setTimeframe] = useState('D');
   const [loading, setLoading] = useState(true);
@@ -17,6 +18,8 @@ export default function StockChartModal({ symbol, name, onClose }) {
     if (!symbol || !chartContainerRef.current) return;
 
     let isMounted = true;
+    const containerElement = chartContainerRef.current;
+    let doubleClickHandler = null;
     setLoading(true);
 
     // Clear previous chart
@@ -67,6 +70,14 @@ export default function StockChartModal({ symbol, name, onClose }) {
           borderColor: '#2a2e39',
           timeVisible: timeframe !== 'D',
           secondsVisible: false
+        },
+        watermark: {
+          visible: true,
+          fontSize: 32,
+          horzAlign: 'center',
+          vertAlign: 'center',
+          color: 'rgba(255, 255, 255, 0.04)',
+          text: `${symbol.replace('NSE:', '').replace('-EQ', '')} (${timeframe})`
         }
       });
 
@@ -123,8 +134,9 @@ export default function StockChartModal({ symbol, name, onClose }) {
       })));
 
       // EMA 20 Overlay Line
+      let ema20Series = null;
       if (showEma20) {
-        const ema20Series = chart.addLineSeries({
+        ema20Series = chart.addLineSeries({
           color: '#2962ff',
           lineWidth: 2,
           title: 'EMA 20'
@@ -133,8 +145,9 @@ export default function StockChartModal({ symbol, name, onClose }) {
       }
 
       // EMA 50 Overlay Line
+      let ema50Series = null;
       if (showEma50) {
-        const ema50Series = chart.addLineSeries({
+        ema50Series = chart.addLineSeries({
           color: '#ffb703',
           lineWidth: 2,
           title: 'EMA 50'
@@ -160,6 +173,115 @@ export default function StockChartModal({ symbol, name, onClose }) {
         chart.timeScale().fitContent();
       }
 
+      // Legend Update Logic (formatted like Dhan/Zerodha hover legend)
+      const formatVol = (val) => {
+        if (val === undefined || val === null || isNaN(val)) return 'N/A';
+        if (val >= 1000000) return (val / 1000000).toFixed(2) + 'M';
+        if (val >= 1000) return (val / 1000).toFixed(2) + 'K';
+        return val.toFixed(0);
+      };
+
+      const updateLegend = (bar, vol, volMa, ema20Val, ema50Val) => {
+        if (!legendRef.current) return;
+        
+        let html = '';
+        if (bar) {
+          const isGreen = bar.close >= bar.open;
+          const colorClass = isGreen ? '#00f090' : '#ff3b57';
+          const change = bar.close - bar.open;
+          const changePct = ((change / bar.open) * 100).toFixed(2);
+          const sign = change >= 0 ? '+' : '';
+
+          html += `
+            <div style="display: flex; align-items: center; gap: 4px; margin-right: 12px; flex-wrap: wrap;">
+              <span style="color: var(--text-muted)">O</span> <span style="color: ${colorClass}; font-weight: 600;">${bar.open.toFixed(2)}</span>
+              <span style="color: var(--text-muted); margin-left: 4px;">H</span> <span style="color: ${colorClass}; font-weight: 600;">${bar.high.toFixed(2)}</span>
+              <span style="color: var(--text-muted); margin-left: 4px;">L</span> <span style="color: ${colorClass}; font-weight: 600;">${bar.low.toFixed(2)}</span>
+              <span style="color: var(--text-muted); margin-left: 4px;">C</span> <span style="color: ${colorClass}; font-weight: 600;">${bar.close.toFixed(2)}</span>
+              <span style="color: ${colorClass}; font-weight: 600; font-size: 0.72rem; margin-left: 4px;">(${sign}${changePct}%)</span>
+            </div>
+          `;
+        }
+        
+        if (vol !== undefined && vol !== null) {
+          const volStr = formatVol(vol);
+          const volMaStr = volMa !== undefined && volMa !== null ? formatVol(volMa) : 'N/A';
+          html += `
+            <div style="display: flex; align-items: center; gap: 4px; margin-right: 12px; flex-wrap: wrap;">
+              <span style="color: var(--text-muted)">Vol:</span> <span style="color: #26a69a; font-weight: 600;">${volStr}</span>
+              <span style="color: var(--text-muted); margin-left: 6px;">Vol MA(20):</span> <span style="color: #ffb703; font-weight: 600;">${volMaStr}</span>
+            </div>
+          `;
+        }
+
+        let emaHtml = '';
+        if (showEma20 && ema20Val !== undefined && ema20Val !== null) {
+          emaHtml += `<span style="color: #2962ff; font-weight: 600; margin-right: 8px;">EMA 20: ${ema20Val.toFixed(2)}</span>`;
+        }
+        if (showEma50 && ema50Val !== undefined && ema50Val !== null) {
+          emaHtml += `<span style="color: #ffb703; font-weight: 600;">EMA 50: ${ema50Val.toFixed(2)}</span>`;
+        }
+        if (emaHtml) {
+          html += `
+            <div style="display: flex; align-items: center; gap: 4px; border-left: 1px solid #2a2e39; padding-left: 12px; flex-wrap: wrap;">
+              ${emaHtml}
+            </div>
+          `;
+        }
+
+        legendRef.current.innerHTML = html;
+      };
+
+      // Set initial values (using the latest candle in the array)
+      const latestCandle = candles[candles.length - 1];
+      if (latestCandle) {
+        const latestFormattedBar = formattedCandles[formattedCandles.length - 1];
+        updateLegend(
+          latestFormattedBar,
+          latestCandle.volume,
+          latestCandle.volume_ma,
+          latestCandle.ema20,
+          latestCandle.ema50
+        );
+      }
+
+      // Subscribe to Crosshair Movement
+      chart.subscribeCrosshairMove(param => {
+        if (param.time) {
+          const bar = param.seriesData.get(candlestickSeries);
+          const volData = param.seriesData.get(volumeSeries);
+          const vol = volData ? volData.value : null;
+          const volMaData = param.seriesData.get(volumeMaSeries);
+          const volMa = volMaData ? volMaData.value : null;
+          
+          let ema20Val = null;
+          if (showEma20 && ema20Series) {
+            const e20 = param.seriesData.get(ema20Series);
+            ema20Val = e20 ? e20.value : null;
+          }
+          let ema50Val = null;
+          if (showEma50 && ema50Series) {
+            const e50 = param.seriesData.get(ema50Series);
+            ema50Val = e50 ? e50.value : null;
+          }
+
+          updateLegend(bar, vol, volMa, ema20Val, ema50Val);
+        } else {
+          // Fallback to latest candle values
+          const latestCandle = candles[candles.length - 1];
+          if (latestCandle) {
+            const latestFormattedBar = formattedCandles[formattedCandles.length - 1];
+            updateLegend(
+              latestFormattedBar,
+              latestCandle.volume,
+              latestCandle.volume_ma,
+              latestCandle.ema20,
+              latestCandle.ema50
+            );
+          }
+        }
+      });
+
       // Handle Resize with ResizeObserver
       const resizeObserver = new ResizeObserver(entries => {
         if (entries.length === 0 || entries[0].target !== chartContainerRef.current) { return; }
@@ -170,6 +292,23 @@ export default function StockChartModal({ symbol, name, onClose }) {
       });
       resizeObserver.observe(chartContainerRef.current);
 
+      // Double Click to Reset Zoom (Dhan/Zerodha style double-click to reset view)
+      doubleClickHandler = () => {
+        if (chartInstance.current) {
+          if (candles.length > defaultVisibleBars) {
+            chartInstance.current.timeScale().setVisibleLogicalRange({
+              from: candles.length - defaultVisibleBars,
+              to: candles.length
+            });
+          } else {
+            chartInstance.current.timeScale().fitContent();
+          }
+        }
+      };
+      if (containerElement) {
+        containerElement.addEventListener('dblclick', doubleClickHandler);
+      }
+
       chartInstance.current.resizeObserver = resizeObserver;
 
       setLoading(false);
@@ -179,6 +318,9 @@ export default function StockChartModal({ symbol, name, onClose }) {
 
     return () => {
       isMounted = false;
+      if (containerElement && doubleClickHandler) {
+        containerElement.removeEventListener('dblclick', doubleClickHandler);
+      }
       if (chartInstance.current) {
         if (chartInstance.current.resizeObserver) {
             chartInstance.current.resizeObserver.disconnect();
@@ -269,6 +411,25 @@ export default function StockChartModal({ symbol, name, onClose }) {
               <RefreshCw size={24} className="spin" style={{ marginRight: '8px' }} /> Loading candlestick data from FYERS...
             </div>
           )}
+          <div ref={legendRef} style={{
+            position: 'absolute',
+            top: '12px',
+            left: '12px',
+            zIndex: 5,
+            fontSize: '0.72rem',
+            fontFamily: "'Inter', sans-serif",
+            color: '#d1d4dc',
+            background: 'rgba(19, 23, 34, 0.85)',
+            padding: '6px 12px',
+            borderRadius: '6px',
+            pointerEvents: 'none',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '8px',
+            lineHeight: '1.4',
+            border: '1px solid #2a2e39',
+            maxWidth: 'calc(100% - 24px)'
+          }} />
           <div ref={chartContainerRef} style={{ width: '100%', height: '100%', borderRadius: '8px', overflow: 'hidden' }} />
         </div>
       </div>
