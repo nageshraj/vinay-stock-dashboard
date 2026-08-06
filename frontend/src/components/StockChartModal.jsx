@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, RefreshCw, BarChart2, Layers } from 'lucide-react';
+import { X, RefreshCw, BarChart2, Layers, ArrowLeft } from 'lucide-react';
 import { createChart } from 'lightweight-charts';
 import { getStockCandles } from '../services/api';
 
@@ -289,10 +289,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
         if (entries.length === 0 || entries[0].target !== chartContainerRef.current) { return; }
         const newRect = entries[0].contentRect;
         if (chartInstance.current) {
-            chartInstance.current.applyOptions({ 
-              width: newRect.width,
-              height: newRect.height || chartHeight
-            });
+            chartInstance.current.applyOptions({ width: newRect.width });
         }
       });
       resizeObserver.observe(chartContainerRef.current);
@@ -343,17 +340,35 @@ export default function StockChartModal({ symbol, name, onClose }) {
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="chart-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
-          <div style={{ flex: '1 1 auto', minWidth: '0', wordBreak: 'break-word' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              <h2 style={{ fontSize: '1.4rem' }}>{name}</h2>
-              <span className="mono" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{symbol}</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px', flexWrap: 'wrap' }}>
-              <span className="mono" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-heading)' }}>₹{stockInfo.price}</span>
-              <span className={stockInfo.changePct >= 0 ? 'badge-green' : 'badge-red'}>
-                {stockInfo.changePct >= 0 ? `+${stockInfo.changePct}%` : `${stockInfo.changePct}%`}
-              </span>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>High: ₹{stockInfo.high} | Low: ₹{stockInfo.low}</span>
+          <div style={{ flex: '1 1 auto', minWidth: '0', wordBreak: 'break-word', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {isMobile && (
+              <button 
+                onClick={onClose}
+                style={{ 
+                  background: 'transparent', 
+                  border: 'none', 
+                  color: 'var(--text-heading)', 
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <ArrowLeft size={20} />
+              </button>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <h2 style={{ fontSize: '1.4rem' }}>{name}</h2>
+                <span className="mono" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{symbol}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px', flexWrap: 'wrap' }}>
+                <span className="mono" style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-heading)' }}>₹{stockInfo.price}</span>
+                <span className={stockInfo.changePct >= 0 ? 'badge-green' : 'badge-red'}>
+                  {stockInfo.changePct >= 0 ? `+${stockInfo.changePct}%` : `${stockInfo.changePct}%`}
+                </span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>High: ₹{stockInfo.high} | Low: ₹{stockInfo.low}</span>
+              </div>
             </div>
           </div>
 
@@ -372,9 +387,11 @@ export default function StockChartModal({ symbol, name, onClose }) {
               ))}
             </div>
 
-            <button className="btn-secondary" style={{ padding: '8px' }} onClick={onClose}>
-              <X size={18} />
-            </button>
+            {!isMobile && (
+              <button className="btn-secondary" style={{ padding: '8px' }} onClick={onClose}>
+                <X size={18} />
+              </button>
+            )}
           </div>
         </div>
 
