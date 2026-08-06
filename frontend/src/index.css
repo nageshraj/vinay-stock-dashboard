@@ -399,24 +399,32 @@ h1, h2, h3, h4, h5, h6 {
 
 @media (max-width: 768px) {
   .navbar {
-    flex-wrap: wrap;
-    height: auto;
-    gap: 16px;
-    padding: 16px;
-    flex-direction: column;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    padding: 10px 16px;
+    height: auto;
+    gap: 10px;
   }
   
   .brand {
-    width: 100%;
-    justify-content: center;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
   
   .nav-tabs {
+    order: 3; /* Push navigation tabs to the next line */
     width: 100%;
+    margin-top: 4px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 8px;
+    justify-content: space-around;
     overflow-x: auto;
     padding-bottom: 4px;
-    justify-content: flex-start;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -425,22 +433,27 @@ h1, h2, h3, h4, h5, h6 {
   }
   
   .navbar-controls {
-    width: 100%;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
   }
 
   .auto-refresh-group {
-    flex: 1;
-    justify-content: space-between;
-    padding: 8px 12px;
+    padding: 4px 8px;
+    gap: 4px;
+    border-radius: 6px;
+  }
+
+  .auto-refresh-label {
+    display: none; /* Hide label to save space on mobile screen */
   }
 
   .fyers-status-btn {
-    flex: 1;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    border-radius: 6px;
     justify-content: center;
-    padding: 8px 14px;
   }
 
   .nav-btn {
@@ -490,5 +503,10 @@ h1, h2, h3, h4, h5, h6 {
   }
   .chart-modal-header span.mono {
     font-size: 0.85rem !important;
+  }
+
+  .select-input, .text-input {
+    padding: 4px 8px !important;
+    font-size: 0.75rem !important;
   }
 }

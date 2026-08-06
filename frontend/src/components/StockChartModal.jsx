@@ -13,6 +13,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
   const [showEma20, setShowEma20] = useState(true);
   const [showEma50, setShowEma50] = useState(true);
   const [stockInfo, setStockInfo] = useState({ price: 0, changePct: 0, high: 0, low: 0, volume: 0 });
+  const chartHeight = window.innerWidth < 768 ? 320 : 440;
 
   useEffect(() => {
     if (!symbol || !chartContainerRef.current) return;
@@ -50,7 +51,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
       // Create Lightweight Chart instance
       const chart = createChart(chartContainerRef.current, {
         width: chartContainerRef.current.clientWidth,
-        height: 440,
+        height: chartHeight,
         layout: {
           background: { color: '#131722' },
           textColor: '#d1d4dc',
@@ -405,7 +406,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
         </div>
 
         {/* TradingView Chart Canvas */}
-        <div className="chart-container" style={{ position: 'relative', width: '100%', height: '440px' }}>
+        <div className="chart-container" style={{ position: 'relative', width: '100%', height: `${chartHeight}px` }}>
           {loading && (
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, color: 'var(--text-muted)' }}>
               <RefreshCw size={24} className="spin" style={{ marginRight: '8px' }} /> Loading candlestick data from FYERS...
