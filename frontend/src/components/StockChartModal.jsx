@@ -108,6 +108,20 @@ export default function StockChartModal({ symbol, name, onClose }) {
         color: c.close >= c.open ? 'rgba(0, 240, 144, 0.3)' : 'rgba(255, 59, 87, 0.3)'
       })));
 
+      // Volume MA (20) Overlay Line
+      const volumeMaSeries = chart.addLineSeries({
+        color: 'rgba(255, 183, 3, 0.7)', // Semi-transparent gold/yellow
+        lineWidth: 1.5,
+        priceScaleId: '',
+        title: 'Volume MA (20)',
+        scaleMargins: { top: 0.8, bottom: 0 }
+      });
+
+      volumeMaSeries.setData(candles.filter(c => c.volume_ma !== undefined && c.volume_ma !== null).map(c => ({
+        time: isIntraday ? c.time + offset : c.time,
+        value: c.volume_ma
+      })));
+
       // EMA 20 Overlay Line
       if (showEma20) {
         const ema20Series = chart.addLineSeries({

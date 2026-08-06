@@ -312,7 +312,8 @@ def get_stock_candles(symbol: str = Query("NSE:RELIANCE-EQ"), timeframe: str = Q
             "volume": int(row["volume"]),
             "ema20": float(row["EMA_20"]) if pd.notna(row.get("EMA_20")) else None,
             "ema50": float(row["EMA_50"]) if pd.notna(row.get("EMA_50")) else None,
-            "rsi": float(row["RSI_14"]) if pd.notna(row.get("RSI_14")) else None
+            "rsi": float(row["RSI_14"]) if pd.notna(row.get("RSI_14")) else None,
+            "volume_ma": float(row["Volume_SMA"]) if pd.notna(row.get("Volume_SMA")) else None
         })
 
     return {
