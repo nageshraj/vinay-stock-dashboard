@@ -341,6 +341,14 @@ def get_opening_rvol_dashboard(
         "results": results
     }
 
+@app.post("/api/screener/clear-cache")
+def clear_screener_cache():
+    screener_engine.invalidate_live_cache()
+    return {
+        "status": "success",
+        "message": "Memory cache cleared and today's snapshots deleted. Spawning fresh live FYERS fetch."
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)

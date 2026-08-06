@@ -444,8 +444,8 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .nav-btn {
-    padding: 8px 16px;
-    font-size: 0.95rem;
+    padding: 6px 12px;
+    font-size: 0.8rem;
     white-space: nowrap;
   }
   
@@ -459,7 +459,36 @@ h1, h2, h3, h4, h5, h6 {
     white-space: nowrap;
   }
   
+  .data-table th, .data-table td {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+
+  .badge-green, .badge-red, .badge-gold {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+  }
+  
   .modal-content {
     padding: 16px;
+    width: 95%;
+  }
+
+  /* Mobile text optimizations */
+  h1 {
+    font-size: 1.4rem !important;
+  }
+  h2 {
+    font-size: 1.2rem !important;
+  }
+  h3 {
+    font-size: 1.05rem !important;
+  }
+  
+  .chart-modal-header h2 {
+    font-size: 1.15rem !important;
+  }
+  .chart-modal-header span.mono {
+    font-size: 0.85rem !important;
   }
 }

@@ -313,13 +313,32 @@ class ScreenerEngine:
         try:
             df_today = fyers_service.fetch_historical_candles(symbol, timeframe=tf, days=1)
             if not df_today.empty and len(df_today) >= 1:
-                first_row = df_today.iloc[0]
-                today_vol = int(first_row["volume"])
-                latest = df_today.iloc[-1]
-                prev = df_today.iloc[-2] if len(df_today) > 1 else latest
-                curr_price = round(float(latest["close"]), 2)
-                change_pct = round(float(((curr_price - prev["close"]) / max(prev["close"], 0.01)) * 100), 2)
-                live_fetch_ok = True
+                # Convert timestamp (UTC epoch) to IST datetime (+5:30)
+                df_today["ist_date"] = pd.to_datetime(df_today["timestamp"] + 19800, unit="s")
+                
+                # Get the latest session date present in the dataset
+                latest_date = df_today["ist_date"].dt.date.max()
+                
+                # Filter for only this latest session's candles
+                df_filtered = df_today[df_today["ist_date"].dt.date == latest_date]
+                
+                if not df_filtered.empty:
+                    first_row = df_filtered.iloc[0]
+                    today_vol = int(first_row["volume"])
+                    
+                    latest = df_filtered.iloc[-1]
+                    curr_price = round(float(latest["close"]), 2)
+                    
+                    # Benchmark price to calculate true daily Change %:
+                    # Last candle of the previous day if available, otherwise today's opening price.
+                    first_index = df_filtered.index[0]
+                    if first_index > 0:
+                        yesterday_close = float(df_today.loc[first_index - 1, "close"])
+                    else:
+                        yesterday_close = float(first_row["open"])
+                    
+                    change_pct = round(float(((curr_price - yesterday_close) / max(yesterday_close, 0.01)) * 100), 2)
+                    live_fetch_ok = True
         except Exception:
             pass
 

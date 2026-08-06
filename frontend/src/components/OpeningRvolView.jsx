@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, Search, LineChart, RefreshCw } from 'lucide-react';
-import { getOpeningRvolDashboard } from '../services/api';
+import { getOpeningRvolDashboard, clearScreenerCache } from '../services/api';
 
 export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
   const [timeframe, setTimeframe] = useState('5m');
@@ -24,6 +24,19 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
       setIsBaseline(looksLikeBaseline);
     }
     if (!silent) setLoading(false);
+  };
+
+  const handleForceRefresh = async () => {
+    setLoading(true);
+    try {
+      await clearScreenerCache();
+      setIsBaseline(true);
+      setLiveRetryCount(0);
+      await fetchDashboard(true);
+    } catch (err) {
+      console.error('Error in force refresh:', err);
+    }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -88,9 +101,14 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
             </h2>
           </div>
 
-          <button className="btn-secondary" onClick={fetchDashboard} disabled={loading}>
-            <RefreshCw size={14} className={loading ? 'spin' : ''} /> {loading ? 'Loading...' : 'Refresh'}
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button className="btn-secondary" onClick={handleForceRefresh} disabled={loading} style={{ borderColor: 'var(--red)', color: 'var(--red)' }}>
+              <RefreshCw size={14} className={loading ? 'spin' : ''} style={{ marginRight: '6px' }} /> Force Live Refresh
+            </button>
+            <button className="btn-secondary" onClick={() => fetchDashboard()} disabled={loading}>
+              <RefreshCw size={14} className={loading ? 'spin' : ''} /> {loading ? 'Loading...' : 'Refresh'}
+            </button>
+          </div>
         </div>
       </div>
 

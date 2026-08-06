@@ -95,3 +95,16 @@ export async function getOpeningRvolDashboard(timeframe = '5m', sortOrder = 'des
   }
   return { timeframe, sort_order: sortOrder, total: 0, results: [] };
 }
+
+export async function clearScreenerCache() {
+  try {
+    const res = await fetch(`${API_BASE}/screener/clear-cache`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return await res.json();
+  } catch (err) {
+    console.error('Error clearing screener cache:', err);
+    return { status: 'error', message: err.message };
+  }
+}

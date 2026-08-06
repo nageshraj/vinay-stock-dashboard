@@ -8,7 +8,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
   const chartInstance = useRef(null);
   const legendRef = useRef(null);
 
-  const [timeframe, setTimeframe] = useState('D');
+  const [timeframe, setTimeframe] = useState('15m');
   const [loading, setLoading] = useState(true);
   const [showEma20, setShowEma20] = useState(true);
   const [showEma50, setShowEma50] = useState(true);
