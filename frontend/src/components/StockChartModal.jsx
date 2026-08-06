@@ -13,7 +13,8 @@ export default function StockChartModal({ symbol, name, onClose }) {
   const [showEma20, setShowEma20] = useState(true);
   const [showEma50, setShowEma50] = useState(true);
   const [stockInfo, setStockInfo] = useState({ price: 0, changePct: 0, high: 0, low: 0, volume: 0 });
-  const chartHeight = window.innerWidth < 768 ? 320 : 440;
+  const isMobile = window.innerWidth < 768;
+  const chartHeight = isMobile ? (window.innerHeight - 180) : 440;
 
   useEffect(() => {
     if (!symbol || !chartContainerRef.current) return;
@@ -288,7 +289,10 @@ export default function StockChartModal({ symbol, name, onClose }) {
         if (entries.length === 0 || entries[0].target !== chartContainerRef.current) { return; }
         const newRect = entries[0].contentRect;
         if (chartInstance.current) {
-            chartInstance.current.applyOptions({ width: newRect.width });
+            chartInstance.current.applyOptions({ 
+              width: newRect.width,
+              height: newRect.height || chartHeight
+            });
         }
       });
       resizeObserver.observe(chartContainerRef.current);
@@ -375,7 +379,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
         </div>
 
         {/* Indicators Overlay Toggles */}
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="chart-overlays-container" style={{ display: 'flex', gap: '12px', marginBottom: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Layers size={14} /> Technical Overlays:
           </span>
@@ -412,25 +416,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
               <RefreshCw size={24} className="spin" style={{ marginRight: '8px' }} /> Loading candlestick data from FYERS...
             </div>
           )}
-          <div ref={legendRef} style={{
-            position: 'absolute',
-            top: '12px',
-            left: '12px',
-            zIndex: 5,
-            fontSize: '0.72rem',
-            fontFamily: "'Inter', sans-serif",
-            color: '#d1d4dc',
-            background: 'rgba(19, 23, 34, 0.85)',
-            padding: '6px 12px',
-            borderRadius: '6px',
-            pointerEvents: 'none',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '8px',
-            lineHeight: '1.4',
-            border: '1px solid #2a2e39',
-            maxWidth: 'calc(100% - 24px)'
-          }} />
+          <div ref={legendRef} className="chart-legend" />
           <div ref={chartContainerRef} style={{ width: '100%', height: '100%', borderRadius: '8px', overflow: 'hidden' }} />
         </div>
       </div>
