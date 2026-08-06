@@ -127,13 +127,17 @@ export default function StockChartModal({ symbol, name, onClose }) {
 
       chart.timeScale().fitContent();
 
-      // Handle Resize
-      const handleResize = () => {
-        if (chartContainerRef.current && chartInstance.current) {
-          chartInstance.current.applyOptions({ width: chartContainerRef.current.clientWidth });
+      // Handle Resize with ResizeObserver
+      const resizeObserver = new ResizeObserver(entries => {
+        if (entries.length === 0 || entries[0].target !== chartContainerRef.current) { return; }
+        const newRect = entries[0].contentRect;
+        if (chartInstance.current) {
+            chartInstance.current.applyOptions({ width: newRect.width });
         }
-      };
-      window.addEventListener('resize', handleResize);
+      });
+      resizeObserver.observe(chartContainerRef.current);
+
+      chartInstance.current.resizeObserver = resizeObserver;
 
       setLoading(false);
     }
@@ -143,6 +147,9 @@ export default function StockChartModal({ symbol, name, onClose }) {
     return () => {
       isMounted = false;
       if (chartInstance.current) {
+        if (chartInstance.current.resizeObserver) {
+            chartInstance.current.resizeObserver.disconnect();
+        }
         chartInstance.current.remove();
         chartInstance.current = null;
       }
@@ -156,7 +163,7 @@ export default function StockChartModal({ symbol, name, onClose }) {
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="chart-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
-          <div style={{ flex: '1 1 auto', minWidth: '200px' }}>
+          <div style={{ flex: '1 1 auto', minWidth: '0', wordBreak: 'break-word' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               <h2 style={{ fontSize: '1.4rem' }}>{name}</h2>
               <span className="mono" style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{symbol}</span>
