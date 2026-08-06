@@ -23,21 +23,6 @@ export default function OverviewView({ onSelectStock, onSwitchToScreener, refres
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* Hero Welcome Banner */}
-      <div className="card" style={{ padding: '24px', background: 'var(--bg-card)', borderLeft: '4px solid #2962ff' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '6px' }}>ChartPulse Terminal Overview</h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-              Real-time NSE market overview powered by FYERS API. Select any stock to view interactive TradingView charts or build custom scans.
-            </p>
-          </div>
-          <button className="btn-primary" onClick={onSwitchToScreener}>
-            <Zap size={16} /> Open Custom Screener Engine
-          </button>
-        </div>
-      </div>
-
       {/* Featured Watchlist Cards */}
       <div>
         <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
