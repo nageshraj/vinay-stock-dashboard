@@ -641,11 +641,6 @@ h1, h2, h3, h4, h5, h6 {
     gap: 6px !important;
     color: var(--text-muted) !important;
   }
-
-  .chart-container {
-    flex: 1 !important;
-    height: auto !important;
-  }
 }
 
 
