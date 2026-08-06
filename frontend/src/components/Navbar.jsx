@@ -20,10 +20,10 @@ export default function Navbar({
           <div className="brand-icon">
             <TrendingUp size={22} color="var(--text-heading)" />
           </div>
-          <span>ChartPulse <span className="fyers-badge">FYERS v3</span></span>
+          <span>ChartPulse <span className="fyers-badge" style={{ fontSize: '0.65rem', padding: '1px 5px' }}>v3</span></span>
         </div>
 
-        <nav className="nav-tabs">
+        <nav className="nav-tabs desktop-only">
           <button 
             className={`nav-btn ${activeTab === 'overview' ? 'active' : ''}`}
             onClick={() => setActiveTab('overview')}
@@ -53,7 +53,7 @@ export default function Navbar({
         <div className="navbar-controls">
           {/* Auto Refresh Control Group */}
           <div className="auto-refresh-group">
-            <Clock size={14} className="icon-blue" />
+            <Clock size={14} className="icon-blue" style={{ flexShrink: 0 }} />
             <span className="auto-refresh-label">Auto Refresh:</span>
             <select 
               className="select-input auto-refresh-select"
@@ -105,7 +105,7 @@ export default function Navbar({
 
       {/* Live Market Ticker Bar */}
       <div className="ticker-bar">
-        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#787b86', textTransform: 'uppercase' }}>MARKET INDICES</span>
+        <span className="ticker-label" style={{ fontSize: '0.7rem', fontWeight: 600, color: '#787b86', textTransform: 'uppercase' }}>MARKET INDICES</span>
         {indices.map((idx, i) => (
           <div key={i} className="ticker-item">
             <span className="ticker-name">{idx.name}</span>
@@ -116,6 +116,38 @@ export default function Navbar({
           </div>
         ))}
       </div>
+
+      {/* Sticky Bottom Navigation for Mobile */}
+      <nav className="mobile-bottom-nav">
+        <button 
+          className={`mobile-nav-btn ${activeTab === 'overview' ? 'active' : ''}`}
+          onClick={() => setActiveTab('overview')}
+        >
+          <TrendingUp size={20} />
+          <span>Overview</span>
+        </button>
+        <button 
+          className={`mobile-nav-btn ${activeTab === 'rvol' ? 'active' : ''}`}
+          onClick={() => setActiveTab('rvol')}
+        >
+          <BarChart3 size={20} />
+          <span>RVOL</span>
+        </button>
+        <button 
+          className={`mobile-nav-btn ${activeTab === 'screener' ? 'active' : ''}`}
+          onClick={() => setActiveTab('screener')}
+        >
+          <Filter size={20} />
+          <span>Screener</span>
+        </button>
+        <button 
+          className={`mobile-nav-btn ${activeTab === 'sectors' ? 'active' : ''}`}
+          onClick={() => setActiveTab('sectors')}
+        >
+          <PieChart size={20} />
+          <span>Sectors</span>
+        </button>
+      </nav>
     </header>
   );
 }

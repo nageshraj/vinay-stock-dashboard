@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Search, LineChart, RefreshCw } from 'lucide-react';
+import { BarChart3, Search, LineChart, RefreshCw, X } from 'lucide-react';
 import { getOpeningRvolDashboard, clearScreenerCache } from '../services/api';
 
 export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
@@ -11,7 +11,14 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
   const [isBaseline, setIsBaseline] = useState(false); // true when showing placeholder data
   const [liveRetryCount, setLiveRetryCount] = useState(0);
   const [sortConfig, setSortConfig] = useState({ key: 'rvolRatio', direction: 'desc' });
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const MAX_LIVE_RETRIES = 5;
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const fetchDashboard = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -93,20 +100,47 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Page Header */}
-      <div style={{ padding: '24px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+      <div style={{ 
+        padding: isMobile ? '16px' : '24px', 
+        background: 'var(--bg-card)', 
+        border: '1px solid var(--border-color)', 
+        borderRadius: '12px' 
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h2 style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <BarChart3 size={24} color="var(--blue)" /> Opening RVOL
+            <h2 style={{ fontSize: isMobile ? '1.2rem' : '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <BarChart3 size={isMobile ? 20 : 24} color="var(--blue)" /> Opening RVOL
             </h2>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button className="btn-secondary" onClick={handleForceRefresh} disabled={loading} style={{ borderColor: 'var(--red)', color: 'var(--red)' }}>
-              <RefreshCw size={14} className={loading ? 'spin' : ''} style={{ marginRight: '6px' }} /> Force Live Refresh
+          <div style={{ display: 'flex', gap: '8px', width: isMobile ? '100%' : 'auto' }}>
+            <button 
+              className="btn-secondary" 
+              onClick={handleForceRefresh} 
+              disabled={loading} 
+              style={{ 
+                borderColor: 'var(--red)', 
+                color: 'var(--red)', 
+                flex: isMobile ? 1 : 'none', 
+                justifyContent: 'center',
+                fontSize: isMobile ? '0.75rem' : '0.875rem',
+                padding: isMobile ? '8px' : '6px 12px'
+              }}
+            >
+              <RefreshCw size={12} className={loading ? 'spin' : ''} /> {isMobile ? 'Force' : 'Force Live Refresh'}
             </button>
-            <button className="btn-secondary" onClick={() => fetchDashboard()} disabled={loading}>
-              <RefreshCw size={14} className={loading ? 'spin' : ''} /> {loading ? 'Loading...' : 'Refresh'}
+            <button 
+              className="btn-secondary" 
+              onClick={() => fetchDashboard()} 
+              disabled={loading}
+              style={{ 
+                flex: isMobile ? 1 : 'none', 
+                justifyContent: 'center',
+                fontSize: isMobile ? '0.75rem' : '0.875rem',
+                padding: isMobile ? '8px' : '6px 12px'
+              }}
+            >
+              <RefreshCw size={12} className={loading ? 'spin' : ''} /> Refresh
             </button>
           </div>
         </div>
@@ -123,50 +157,214 @@ export default function OpeningRvolView({ onSelectStock, refreshTrigger }) {
       )}
 
       {/* Control Toolbar: Timeframe + Search */}
-      <div style={{ padding: '20px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          {/* Timeframe selector tabs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>1st Candle Timeframe:</span>
-            <div className="nav-tabs">
+      <div style={{ 
+        padding: isMobile ? '16px' : '20px', 
+        background: 'var(--bg-card)', 
+        border: '1px solid var(--border-color)', 
+        borderRadius: '12px' 
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: isMobile ? 'column' : 'row', 
+          justifyContent: 'space-between', 
+          alignItems: isMobile ? 'stretch' : 'center', 
+          gap: '16px' 
+        }}>
+          {/* Segmented Switcher */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>1st Candle Timeframe</span>
+            <div style={{ 
+              display: 'flex', 
+              background: '#f1f5f9', 
+              padding: '4px', 
+              borderRadius: '8px', 
+              border: '1px solid #e2e8f0',
+              width: isMobile ? '100%' : '320px'
+            }}>
               <button 
-                className={`nav-btn ${timeframe === '5m' ? 'active' : ''}`}
+                style={{
+                  flex: 1,
+                  background: timeframe === '5m' ? '#ffffff' : 'transparent',
+                  color: timeframe === '5m' ? 'var(--blue)' : 'var(--text-muted)',
+                  border: 'none',
+                  outline: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: timeframe === '5m' ? '700' : '500',
+                  cursor: 'pointer',
+                  boxShadow: timeframe === '5m' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                  transition: 'all 0.15s ease'
+                }}
                 onClick={() => setTimeframe('5m')}
               >
-                5 Minutes (9:15 AM)
+                5 Min (9:15 AM)
               </button>
               <button 
-                className={`nav-btn ${timeframe === '15m' ? 'active' : ''}`}
+                style={{
+                  flex: 1,
+                  background: timeframe === '15m' ? '#ffffff' : 'transparent',
+                  color: timeframe === '15m' ? 'var(--blue)' : 'var(--text-muted)',
+                  border: 'none',
+                  outline: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: timeframe === '15m' ? '700' : '500',
+                  cursor: 'pointer',
+                  boxShadow: timeframe === '15m' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                  transition: 'all 0.15s ease'
+                }}
                 onClick={() => setTimeframe('15m')}
               >
-                15 Minutes (9:15 AM)
+                15 Min (9:15 AM)
               </button>
             </div>
           </div>
 
-          {/* Search */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative' }}>
-              <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '10px', top: '10px' }} />
+          {/* Custom Search Box */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: isMobile ? 1 : 'none' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>Search</span>
+            <div style={{ position: 'relative', width: '100%' }}>
               <input 
                 type="text" 
                 className="text-input" 
-                style={{ paddingLeft: '32px', width: '220px' }} 
+                style={{ 
+                  paddingLeft: '32px', 
+                  paddingRight: searchTerm ? '32px' : '10px',
+                  width: '100%',
+                  minWidth: isMobile ? '100%' : '260px',
+                  borderRadius: '8px'
+                }} 
                 placeholder="Search stock or sector..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+              <Search size={14} color="var(--text-muted)" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+              {searchTerm && (
+                <button 
+                  onClick={() => setSearchTerm('')}
+                  style={{ 
+                    position: 'absolute', 
+                    right: '10px', 
+                    top: '50%', 
+                    transform: 'translateY(-50%)',
+                    background: 'transparent',
+                    border: 'none',
+                    padding: '4px',
+                    cursor: 'pointer',
+                    color: 'var(--text-muted)'
+                  }}
+                >
+                  <X size={12} />
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Results Table */}
-      <div style={{ padding: '24px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+      {/* Main Results Table/List */}
+      <div style={{ padding: isMobile ? '16px' : '24px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
         {loading ? (
           <div style={{ padding: '40px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', color: 'var(--text-muted)' }}>
             <RefreshCw size={24} className="spin" />
             <div>Loading data...</div>
+          </div>
+        ) : isMobile ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {filteredStocks.length === 0 ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>No stocks found</div>
+            ) : (
+              filteredStocks.map((stk, idx) => {
+                const ratio = stk.rvolRatio;
+                let badgeBg = 'rgba(255, 59, 87, 0.1)';
+                let badgeColor = 'var(--red)';
+                let borderStyle = '1px solid rgba(255, 59, 87, 0.2)';
+                if (ratio >= 1.5) {
+                  badgeBg = 'rgba(16, 185, 129, 0.1)';
+                  badgeColor = 'var(--green)';
+                  borderStyle = '1px solid rgba(16, 185, 129, 0.2)';
+                } else if (ratio >= 0.8) {
+                  badgeBg = 'rgba(217, 119, 6, 0.1)';
+                  badgeColor = 'var(--gold)';
+                  borderStyle = '1px solid rgba(217, 119, 6, 0.2)';
+                }
+
+                return (
+                  <div 
+                    key={stk.symbol}
+                    className="card"
+                    onClick={() => onSelectStock(stk.symbol, stk.name)}
+                    style={{ 
+                      padding: '14px', 
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '10px',
+                      background: 'var(--bg-card)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '0' }}>
+                      <div style={{ 
+                        fontFamily: 'var(--font-mono)', 
+                        fontSize: '0.8rem', 
+                        fontWeight: 700, 
+                        color: 'var(--text-muted)',
+                        background: '#f1f5f9',
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}>
+                        {idx + 1}
+                      </div>
+                      <div style={{ minWidth: '0' }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-heading)' }}>
+                          {stk.name}
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          {stk.sector}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+                      <div style={{ textAlign: 'right' }}>
+                        <div className="mono" style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-heading)' }}>
+                          ₹{stk.price}
+                        </div>
+                        <div style={{ marginTop: '2px' }}>
+                          <span className={stk.changePct >= 0 ? 'badge-green' : 'badge-red'} style={{ fontSize: '0.7rem', padding: '1px 5px' }}>
+                            {stk.changePct >= 0 ? `+${stk.changePct}%` : `${stk.changePct}%`}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div 
+                        style={{ 
+                          background: badgeBg, 
+                          color: badgeColor, 
+                          border: borderStyle,
+                          borderRadius: '6px',
+                          padding: '6px 8px',
+                          textAlign: 'center',
+                          minWidth: '58px'
+                        }}
+                      >
+                        <div style={{ fontSize: '0.8rem', fontWeight: 800 }}>{ratio.toFixed(2)}x</div>
+                        <div style={{ fontSize: '0.55rem', fontWeight: 600, textTransform: 'uppercase', opacity: 0.8 }}>RVOL</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         ) : (
           <table className="data-table">

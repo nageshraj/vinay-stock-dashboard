@@ -14,6 +14,13 @@ export default function ScreenerView({ onSelectStock, refreshTrigger }) {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({ total: 0, matches: 0 });
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     async function loadPresets() {
@@ -126,87 +133,210 @@ export default function ScreenerView({ onSelectStock, refreshTrigger }) {
         {/* Condition Rows */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {conditions.map((cond, idx) => (
-            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg-card-hover)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', flexWrap: 'wrap', overflowX: 'auto' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--blue)', background: 'rgba(41,98,255,0.15)', padding: '2px 8px', borderRadius: '4px' }}>
-                Rule #{idx + 1}
-              </span>
+            isMobile ? (
+              <div 
+                key={idx} 
+                style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '10px', 
+                  background: 'var(--bg-card-hover)', 
+                  padding: '16px', 
+                  borderRadius: '8px', 
+                  border: '1px solid var(--border-color)',
+                  position: 'relative'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--blue)', background: 'rgba(41,98,255,0.15)', padding: '2px 8px', borderRadius: '4px' }}>
+                    Rule #{idx + 1}
+                  </span>
+                  
+                  {conditions.length > 1 && (
+                    <button 
+                      onClick={() => handleRemoveCondition(idx)} 
+                      style={{ background: 'transparent', border: 'none', color: 'var(--red)', cursor: 'pointer', padding: '4px' }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
 
-              {/* Indicator dropdown */}
-              <select className="select-input" value={cond.indicator} onChange={(e) => handleConditionChange(idx, 'indicator', e.target.value)}>
-                <option value="Close">Close Price</option>
-                <option value="EMA">EMA</option>
-                <option value="RSI">RSI</option>
-                <option value="Volume">Volume</option>
-                <option value="Change%">Change %</option>
-              </select>
+                {/* Indicator select */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Indicator</span>
+                  <select className="select-input" style={{ width: '100%' }} value={cond.indicator} onChange={(e) => handleConditionChange(idx, 'indicator', e.target.value)}>
+                    <option value="Close">Close Price</option>
+                    <option value="EMA">EMA</option>
+                    <option value="RSI">RSI</option>
+                    <option value="Volume">Volume</option>
+                    <option value="Change%">Change %</option>
+                  </select>
+                </div>
 
-              {/* Period input if applicable */}
-              {(cond.indicator === 'EMA' || cond.indicator === 'RSI') && (
-                <input 
-                  type="number" 
-                  className="text-input" 
-                  style={{ width: '70px' }} 
-                  value={cond.period} 
-                  onChange={(e) => handleConditionChange(idx, 'period', e.target.value)} 
-                  placeholder="Period"
-                />
-              )}
+                {/* Period input if applicable */}
+                {(cond.indicator === 'EMA' || cond.indicator === 'RSI') && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Period</span>
+                    <input 
+                      type="number" 
+                      className="text-input" 
+                      style={{ width: '100%' }} 
+                      value={cond.period} 
+                      onChange={(e) => handleConditionChange(idx, 'period', e.target.value)} 
+                      placeholder="Period"
+                    />
+                  </div>
+                )}
 
-              {/* Operator */}
-              <select className="select-input" value={cond.operator} onChange={(e) => handleConditionChange(idx, 'operator', e.target.value)}>
-                <option value=">">Greater than (&gt;)</option>
-                <option value=">=">Greater or Equal (&gt;=)</option>
-                <option value="<">Less than (&lt;)</option>
-                <option value="<=">Less or Equal (&lt;=)</option>
-                <option value="==">Equal to (==)</option>
-              </select>
+                {/* Operator */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Condition</span>
+                  <select className="select-input" style={{ width: '100%' }} value={cond.operator} onChange={(e) => handleConditionChange(idx, 'operator', e.target.value)}>
+                    <option value=">">Greater than (&gt;)</option>
+                    <option value=">=">Greater or Equal (&gt;=)</option>
+                    <option value="<">Less than (&lt;)</option>
+                    <option value="<=">Less or Equal (&lt;=)</option>
+                    <option value="==">Equal to (==)</option>
+                  </select>
+                </div>
 
-              {/* Target Type */}
-              <select className="select-input" value={cond.target} onChange={(e) => handleConditionChange(idx, 'target', e.target.value)}>
-                <option value="Value">Static Value</option>
-                <option value="EMA">EMA Indicator</option>
-                <option value="Volume_SMA">Volume 20-SMA</option>
-                <option value="High_Prev">Previous High</option>
-              </select>
+                {/* Target Type */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Compare With</span>
+                  <select className="select-input" style={{ width: '100%' }} value={cond.target} onChange={(e) => handleConditionChange(idx, 'target', e.target.value)}>
+                    <option value="Value">Static Value</option>
+                    <option value="EMA">EMA Indicator</option>
+                    <option value="Volume_SMA">Volume 20-SMA</option>
+                    <option value="High_Prev">Previous High</option>
+                  </select>
+                </div>
 
-              {/* Target Details */}
-              {cond.target === 'Value' ? (
-                <input 
-                  type="number" 
-                  className="text-input" 
-                  style={{ width: '90px' }} 
-                  value={cond.target_value} 
-                  onChange={(e) => handleConditionChange(idx, 'target_value', e.target.value)} 
-                />
-              ) : cond.target === 'EMA' ? (
-                <input 
-                  type="number" 
-                  className="text-input" 
-                  style={{ width: '80px' }} 
-                  value={cond.target_period} 
-                  onChange={(e) => handleConditionChange(idx, 'target_period', e.target.value)} 
-                  placeholder="EMA Period"
-                />
-              ) : cond.target === 'Volume_SMA' ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem' }}>
-                  <span>x Multiplier:</span>
+                {/* Target Details */}
+                {cond.target === 'Value' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Value</span>
+                    <input 
+                      type="number" 
+                      className="text-input" 
+                      style={{ width: '100%' }} 
+                      value={cond.target_value} 
+                      onChange={(e) => handleConditionChange(idx, 'target_value', e.target.value)} 
+                    />
+                  </div>
+                )}
+
+                {cond.target === 'EMA' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>EMA Period</span>
+                    <input 
+                      type="number" 
+                      className="text-input" 
+                      style={{ width: '100%' }} 
+                      value={cond.target_period} 
+                      onChange={(e) => handleConditionChange(idx, 'target_period', e.target.value)} 
+                      placeholder="EMA Period"
+                    />
+                  </div>
+                )}
+
+                {cond.target === 'Volume_SMA' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Volume Multiplier</span>
+                    <input 
+                      type="number" 
+                      step="0.1" 
+                      className="text-input" 
+                      style={{ width: '100%' }} 
+                      value={cond.multiplier} 
+                      onChange={(e) => handleConditionChange(idx, 'multiplier', e.target.value)} 
+                    />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg-card-hover)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', flexWrap: 'wrap', overflowX: 'auto' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--blue)', background: 'rgba(41,98,255,0.15)', padding: '2px 8px', borderRadius: '4px' }}>
+                  Rule #{idx + 1}
+                </span>
+
+                {/* Indicator dropdown */}
+                <select className="select-input" value={cond.indicator} onChange={(e) => handleConditionChange(idx, 'indicator', e.target.value)}>
+                  <option value="Close">Close Price</option>
+                  <option value="EMA">EMA</option>
+                  <option value="RSI">RSI</option>
+                  <option value="Volume">Volume</option>
+                  <option value="Change%">Change %</option>
+                </select>
+
+                {/* Period input if applicable */}
+                {(cond.indicator === 'EMA' || cond.indicator === 'RSI') && (
                   <input 
                     type="number" 
-                    step="0.1" 
                     className="text-input" 
                     style={{ width: '70px' }} 
-                    value={cond.multiplier} 
-                    onChange={(e) => handleConditionChange(idx, 'multiplier', e.target.value)} 
+                    value={cond.period} 
+                    onChange={(e) => handleConditionChange(idx, 'period', e.target.value)} 
+                    placeholder="Period"
                   />
-                </div>
-              ) : null}
+                )}
 
-              {conditions.length > 1 && (
-                <button className="btn-secondary" style={{ color: 'var(--red)', padding: '6px' }} onClick={() => handleRemoveCondition(idx)}>
-                  <Trash2 size={16} />
-                </button>
-              )}
-            </div>
+                {/* Operator */}
+                <select className="select-input" value={cond.operator} onChange={(e) => handleConditionChange(idx, 'operator', e.target.value)}>
+                  <option value=">">Greater than (&gt;)</option>
+                  <option value=">=">Greater or Equal (&gt;=)</option>
+                  <option value="<">Less than (&lt;)</option>
+                  <option value="<=">Less or Equal (&lt;=)</option>
+                  <option value="==">Equal to (==)</option>
+                </select>
+
+                {/* Target Type */}
+                <select className="select-input" value={cond.target} onChange={(e) => handleConditionChange(idx, 'target', e.target.value)}>
+                  <option value="Value">Static Value</option>
+                  <option value="EMA">EMA Indicator</option>
+                  <option value="Volume_SMA">Volume 20-SMA</option>
+                  <option value="High_Prev">Previous High</option>
+                </select>
+
+                {/* Target Details */}
+                {cond.target === 'Value' ? (
+                  <input 
+                    type="number" 
+                    className="text-input" 
+                    style={{ width: '90px' }} 
+                    value={cond.target_value} 
+                    onChange={(e) => handleConditionChange(idx, 'target_value', e.target.value)} 
+                  />
+                ) : cond.target === 'EMA' ? (
+                  <input 
+                    type="number" 
+                    className="text-input" 
+                    style={{ width: '80px' }} 
+                    value={cond.target_period} 
+                    onChange={(e) => handleConditionChange(idx, 'target_period', e.target.value)} 
+                    placeholder="EMA Period"
+                  />
+                ) : cond.target === 'Volume_SMA' ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem' }}>
+                    <span>x Multiplier:</span>
+                    <input 
+                      type="number" 
+                      step="0.1" 
+                      className="text-input" 
+                      style={{ width: '70px' }} 
+                      value={cond.multiplier} 
+                      onChange={(e) => handleConditionChange(idx, 'multiplier', e.target.value)} 
+                    />
+                  </div>
+                ) : null}
+
+                {conditions.length > 1 && (
+                  <button className="btn-secondary" style={{ color: 'var(--red)', padding: '6px' }} onClick={() => handleRemoveCondition(idx)}>
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+            )
           ))}
 
           <button className="btn-secondary" style={{ alignSelf: 'flex-start', marginTop: '4px' }} onClick={handleAddCondition}>
@@ -226,7 +356,7 @@ export default function ScreenerView({ onSelectStock, refreshTrigger }) {
       </div>
 
       {/* Scan Results Table */}
-      <div className="card" style={{ padding: '24px' }}>
+      <div className="card" style={{ padding: isMobile ? '16px' : '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <h3 style={{ fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -240,6 +370,69 @@ export default function ScreenerView({ onSelectStock, refreshTrigger }) {
 
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Running condition engine on NSE universe...</div>
+        ) : isMobile ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {results.length === 0 ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>No matches found</div>
+            ) : (
+              results.map((stk) => (
+                <div 
+                  key={stk.symbol} 
+                  className="card"
+                  onClick={() => onSelectStock(stk.symbol, stk.name)}
+                  style={{ 
+                    padding: '14px', 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '10px',
+                    background: 'var(--bg-card)',
+                    opacity: stk.matched ? 1 : 0.5
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '0' }}>
+                    {stk.matched ? (
+                      <span className="badge-green" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', borderRadius: '6px', padding: '0', flexShrink: 0 }}>
+                        <CheckCircle2 size={16} />
+                      </span>
+                    ) : (
+                      <div style={{ 
+                        fontSize: '0.65rem', 
+                        fontWeight: 700, 
+                        color: 'var(--text-muted)',
+                        background: '#f1f5f9',
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}>
+                        N/M
+                      </div>
+                    )}
+                    <div style={{ minWidth: '0' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-heading)' }}>{stk.name}</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{stk.sector}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <div className="mono" style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-heading)' }}>₹{stk.price.toLocaleString()}</div>
+                      <div style={{ marginTop: '2px' }}>
+                        <span className={stk.changePct >= 0 ? 'badge-green' : 'badge-red'} style={{ fontSize: '0.7rem', padding: '1px 5px' }}>
+                          {stk.changePct >= 0 ? `+${stk.changePct}%` : `${stk.changePct}%`}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         ) : (
           <table className="data-table">
             <thead>
