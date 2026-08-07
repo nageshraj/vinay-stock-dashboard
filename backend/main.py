@@ -54,95 +54,103 @@ def debug_status():
     """
     import time as _time
     from datetime import datetime, timedelta
+    import traceback
 
-    report = {
-        "timestamp": datetime.now().isoformat(),
-        "fyers": {},
-        "candle_test": {},
-        "render_env": {},
-        "screener_cache": {}
-    }
+    try:
+        report = {
+            "timestamp": datetime.now().isoformat(),
+            "fyers": {},
+            "candle_test": {},
+            "render_env": {},
+            "screener_cache": {}
+        }
 
-    # 1. FYERS connection state
-    report["fyers"] = {
-        "is_connected": fyers_service.is_connected,
-        "has_model": fyers_service.fyers_model is not None,
-        "app_id_prefix": fyers_service.app_id[:8] + "..." if fyers_service.app_id else "MISSING",
-        "token_prefix": fyers_service.access_token[:12] + "..." if fyers_service.access_token else "MISSING",
-        "token_length": len(fyers_service.access_token) if fyers_service.access_token else 0,
-    }
+        # 1. FYERS connection state
+        report["fyers"] = {
+            "is_connected": fyers_service.is_connected,
+            "has_model": fyers_service.fyers_model is not None,
+            "app_id_prefix": fyers_service.app_id[:8] + "..." if fyers_service.app_id else "MISSING",
+            "token_prefix": fyers_service.access_token[:12] + "..." if fyers_service.access_token else "MISSING",
+            "token_length": len(fyers_service.access_token) if fyers_service.access_token else 0,
+        }
 
-    # 2. Raw FYERS candle API test
-    if fyers_service.is_connected and fyers_service.fyers_model:
-        try:
-            today = datetime.now()
-            from_date = (today - timedelta(days=5)).strftime("%Y-%m-%d")
-            to_date = today.strftime("%Y-%m-%d")
-            test_data = {
-                "symbol": "NSE:RELIANCE-EQ",
-                "resolution": "5",
-                "date_format": "1",
-                "range_from": from_date,
-                "range_to": to_date,
-                "cont_flag": "1"
-            }
-            t0 = _time.time()
-            raw = fyers_service.fyers_model.history(data=test_data)
-            elapsed = round(_time.time() - t0, 2)
-            candles = raw.get("candles", [])
-            report["candle_test"] = {
-                "symbol": "NSE:RELIANCE-EQ",
-                "timeframe": "5m",
-                "range": f"{from_date} to {to_date}",
-                "api_status": raw.get("s"),
-                "api_code": raw.get("code"),
-                "api_message": raw.get("message", ""),
-                "candles_returned": len(candles),
-                "first_candle": candles[0] if candles else None,
-                "last_candle": candles[-1] if candles else None,
-                "elapsed_seconds": elapsed
-            }
-        except Exception as e:
-            report["candle_test"] = {"error": str(e)}
-    else:
-        report["candle_test"] = {"skipped": "FYERS not connected or model not initialized"}
+        # 2. Raw FYERS candle API test
+        if fyers_service.is_connected and fyers_service.fyers_model:
+            try:
+                today = datetime.now()
+                from_date = (today - timedelta(days=5)).strftime("%Y-%m-%d")
+                to_date = today.strftime("%Y-%m-%d")
+                test_data = {
+                    "symbol": "NSE:RELIANCE-EQ",
+                    "resolution": "5",
+                    "date_format": "1",
+                    "range_from": from_date,
+                    "range_to": to_date,
+                    "cont_flag": "1"
+                }
+                t0 = _time.time()
+                raw = fyers_service.fyers_model.history(data=test_data)
+                elapsed = round(_time.time() - t0, 2)
+                candles = raw.get("candles", [])
+                report["candle_test"] = {
+                    "symbol": "NSE:RELIANCE-EQ",
+                    "timeframe": "5m",
+                    "range": f"{from_date} to {to_date}",
+                    "api_status": raw.get("s"),
+                    "api_code": raw.get("code"),
+                    "api_message": raw.get("message", ""),
+                    "candles_returned": len(candles),
+                    "first_candle": candles[0] if candles else None,
+                    "last_candle": candles[-1] if candles else None,
+                    "elapsed_seconds": elapsed
+                }
+            except Exception as e:
+                report["candle_test"] = {"error": str(e)}
+        else:
+            report["candle_test"] = {"skipped": "FYERS not connected or model not initialized"}
 
-    # 3. Render environment variables present?
-    report["render_env"] = {
-        "RENDER_API_KEY_set": bool(os.getenv("RENDER_API_KEY")),
-        "RENDER_SERVICE_ID_set": bool(os.getenv("RENDER_SERVICE_ID")),
-        "FYERS_APP_ID_set": bool(os.getenv("FYERS_APP_ID")),
-        "FYERS_SECRET_KEY_set": bool(os.getenv("FYERS_SECRET_KEY")),
-        "FYERS_ACCESS_TOKEN_set": bool(os.getenv("FYERS_ACCESS_TOKEN")),
-        "FYERS_ACCESS_TOKEN_length": len(os.getenv("FYERS_ACCESS_TOKEN", "")),
-        "env_keys": sorted(list(os.environ.keys()))
-    }
+        # 3. Render environment variables present?
+        report["render_env"] = {
+            "RENDER_API_KEY_set": bool(os.getenv("RENDER_API_KEY")),
+            "RENDER_SERVICE_ID_set": bool(os.getenv("RENDER_SERVICE_ID")),
+            "FYERS_APP_ID_set": bool(os.getenv("FYERS_APP_ID")),
+            "FYERS_SECRET_KEY_set": bool(os.getenv("FYERS_SECRET_KEY")),
+            "FYERS_ACCESS_TOKEN_set": bool(os.getenv("FYERS_ACCESS_TOKEN")),
+            "FYERS_ACCESS_TOKEN_length": len(os.getenv("FYERS_ACCESS_TOKEN", "")),
+            "env_keys": sorted(list(os.environ.keys()))
+        }
 
-    # 4. Screener cache state
-    cache_5m = screener_engine._cache.get("raw_rvol_5m_20_fno")
-    cache_15m = screener_engine._cache.get("raw_rvol_15m_20_fno")
-    def sample_prices(results):
-        if not results:
-            return []
-        return [{"symbol": r["symbol"], "price": r.get("price"), "rvolRatio": r.get("rvolRatio"), "is_live": r.get("is_live")} for r in results[:3]]
+        # 4. Screener cache state
+        cache_5m = screener_engine._cache.get("raw_rvol_5m_20_fno")
+        cache_15m = screener_engine._cache.get("raw_rvol_15m_20_fno")
+        def sample_prices(results):
+            if not results:
+                return []
+            return [{"symbol": r["symbol"], "price": r.get("price"), "rvolRatio": r.get("rvolRatio"), "is_live": r.get("is_live")} for r in results[:3]]
 
-    def live_count(results):
-        if not results:
-            return 0
-        return sum(1 for r in results if r.get("is_live"))
+        def live_count(results):
+            if not results:
+                return 0
+            return sum(1 for r in results if r.get("is_live"))
 
-    report["screener_cache"] = {
-        "5m_cache_exists": cache_5m is not None,
-        "5m_stock_count": len(cache_5m[1]) if cache_5m else 0,
-        "5m_live_count": live_count(cache_5m[1] if cache_5m else []),
-        "5m_cache_age_seconds": round(_time.time() - cache_5m[0], 0) if cache_5m else None,
-        "5m_sample_prices": sample_prices(cache_5m[1] if cache_5m else []),
-        "15m_cache_exists": cache_15m is not None,
-        "15m_stock_count": len(cache_15m[1]) if cache_15m else 0,
-        "15m_live_count": live_count(cache_15m[1] if cache_15m else []),
-    }
+        report["screener_cache"] = {
+            "5m_cache_exists": cache_5m is not None,
+            "5m_stock_count": len(cache_5m[1]) if cache_5m else 0,
+            "5m_live_count": live_count(cache_5m[1] if cache_5m else []),
+            "5m_cache_age_seconds": round(_time.time() - cache_5m[0], 0) if cache_5m else None,
+            "5m_sample_prices": sample_prices(cache_5m[1] if cache_5m else []),
+            "15m_cache_exists": cache_15m is not None,
+            "15m_stock_count": len(cache_15m[1]) if cache_15m else 0,
+            "15m_live_count": live_count(cache_15m[1] if cache_15m else []),
+        }
 
-    return report
+        return report
+    except Exception as ex:
+        return {
+            "status": "error",
+            "error_message": str(ex),
+            "traceback": traceback.format_exc()
+        }
 
 @app.post("/api/auth/credentials")
 def update_credentials(req: AuthCredentialsRequest):
