@@ -76,5 +76,3 @@ export default function FyersAuthModal({ onClose, onConnected }) {
     </div>
   );
 }
-  );
-}
