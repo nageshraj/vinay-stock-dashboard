@@ -114,7 +114,8 @@ def debug_status():
         "FYERS_APP_ID_set": bool(os.getenv("FYERS_APP_ID")),
         "FYERS_SECRET_KEY_set": bool(os.getenv("FYERS_SECRET_KEY")),
         "FYERS_ACCESS_TOKEN_set": bool(os.getenv("FYERS_ACCESS_TOKEN")),
-        "FYERS_ACCESS_TOKEN_length": len(os.getenv("FYERS_ACCESS_TOKEN", ""))
+        "FYERS_ACCESS_TOKEN_length": len(os.getenv("FYERS_ACCESS_TOKEN", "")),
+        "env_keys": sorted(list(os.environ.keys()))
     }
 
     # 4. Screener cache state
